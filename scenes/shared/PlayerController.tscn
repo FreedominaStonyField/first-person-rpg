@@ -10,17 +10,13 @@ script = ExtResource("1_v58sa")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_wae83")
 
-
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 current = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
-layer = 1
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer"]
-rect_position = Vector2(10, 10)
-custom_constants/font_size = 16
-valign = 0
-wrap = 0
-text = "Mouse:\nPosition:\nRotation:"
+text = "Mouse:
+Position:
+Rotation:"

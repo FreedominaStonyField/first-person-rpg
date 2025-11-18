@@ -5,11 +5,17 @@ const JUMP_VELOCITY = 4.5
 
 @export var mouse_sensitivity := Vector2(0.15, 0.15)
 @export var max_look_angle := 88.0
+@export var pickup_range := 4.0
+@export var hold_distance := 2.0
+@export var carry_mass_threshold := 30.0
+@export var max_carry_speed_penalty := 0.4
+@export var push_force := 8.0
 
 @onready var camera: Camera3D = $Camera3D
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 
 var pitch := 0.0
+var held_body: RigidBody3D = null
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -41,6 +47,74 @@ func _process(_delta: float) -> void:
 		rot.z,
 	]
 
+func _attempt_pickup() -> void:
+	if not camera:
+		return
+
+	var space := get_world_3d().direct_space_state
+	var origin := camera.global_transform.origin
+	var target := origin - camera.global_transform.basis.z * pickup_range
+	var params := PhysicsRayQueryParameters3D.create(origin, target)
+	params.exclude = [self]
+	params.collide_with_areas = false
+	params.collide_with_bodies = true
+
+	var result := space.intersect_ray(params)
+	if not result:
+		return
+
+	var candidate: Object = result.get("collider")
+	if candidate is RigidBody3D:
+		var body := candidate as RigidBody3D
+		held_body = body
+		body.angular_velocity = Vector3.ZERO
+		body.linear_velocity = Vector3.ZERO
+		body.sleeping = false
+		body.angular_damp = max(body.angular_damp, 8.0)
+
+func _release_held_body() -> void:
+	if held_body:
+		held_body = null
+
+func _update_held_object(delta: float) -> void:
+	if not held_body or not camera:
+		return
+
+	var body := held_body as RigidBody3D
+	if not body:
+		return
+
+	var target := camera.global_transform.origin - camera.global_transform.basis.z * hold_distance
+	var move: Vector3 = target - body.global_transform.origin
+	var mass: float = max(body.mass, 0.1)
+	var response: float = clamp(12.0 / mass, 0.15, 4.0)
+	var desired_velocity: Vector3 = move * response
+	var lerp_factor: float = clamp(delta * 10.0, 0.0, 1.0)
+
+	body.linear_velocity = body.linear_velocity.lerp(desired_velocity, lerp_factor)
+	body.angular_velocity = body.angular_velocity.lerp(Vector3.ZERO, lerp_factor)
+
+	if move.length() > pickup_range * 2.0:
+		_release_held_body()
+
+func _push_collided_bodies(direction: Vector3) -> void:
+	if direction == Vector3.ZERO:
+		return
+
+	var push_dir := direction.normalized()
+	var slide_count: int = get_slide_collision_count()
+	for i in range(slide_count):
+		var collision := get_slide_collision(i)
+		if not collision:
+			continue
+		var collider := collision.get_collider()
+		if collider is RigidBody3D and collider != held_body:
+			var body := collider as RigidBody3D
+			var contact_offset: Vector3 = collision.get_position() - body.global_transform.origin
+			var mass: float = max(body.mass, 0.1)
+			var impulse: Vector3 = push_dir * (push_force / mass)
+			body.apply_impulse(contact_offset, impulse)
+
 func _physics_process(delta: float) -> void:
 	# Add the gravity.
 	if not is_on_floor():
@@ -54,10 +128,27 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	if direction:
-		velocity.x = direction.x * SPEED
-		velocity.z = direction.z * SPEED
+		var speed_penalty := 0.0
+		if held_body and held_body is RigidBody3D:
+			var body := held_body as RigidBody3D
+			speed_penalty = clamp(body.mass / carry_mass_threshold, 0.0, max_carry_speed_penalty)
+		velocity.x = direction.x * SPEED * (1.0 - speed_penalty)
+		velocity.z = direction.z * SPEED * (1.0 - speed_penalty)
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
 
+	# Manage pickup state after movement so the body follows current frame.
+	if Input.is_action_just_pressed("interact"):
+		if held_body:
+			_release_held_body()
+		else:
+			_attempt_pickup()
+
+	if held_body and not Input.is_action_pressed("interact"):
+		_release_held_body()
+
+	_update_held_object(delta)
+
 	move_and_slide()
+	_push_collided_bodies(direction)
