@@ -53,9 +53,10 @@ func _process(_delta: float) -> void:
 	var pos := global_position
 	var rot := rotation_degrees
 	var stamina_value: float = stats.stamina if stats else 0.0
+	var health_value: float = stats.health if stats else 0.0
 
 	var sprint_state := "Sprinting" if is_sprinting else "Walking"
-	debug_label.text = "Mouse: (%.0f, %.0f)\nPosition: (%.2f, %.2f, %.2f)\nRotation: (%.1f, %.1f, %.1f)\nStamina: %.1f\nState: %s" % [
+	debug_label.text = "Mouse: (%.0f, %.0f)\nPosition: (%.2f, %.2f, %.2f)\nRotation: (%.1f, %.1f, %.1f)\nHealth: %.1f\nStamina: %.1f\nState: %s" % [
 		mouse_pos.x,
 		mouse_pos.y,
 		pos.x,
@@ -64,6 +65,7 @@ func _process(_delta: float) -> void:
 		rot.x,
 		rot.y,
 		rot.z,
+		health_value,
 		stamina_value,
 		sprint_state,
 	]

@@ -6,6 +6,8 @@ const HEALTH_REGEN_RATE := 1.5
 const STAMINA_REGEN_RATE := 8.0
 const MAGICKA_REGEN_RATE := 4.0
 
+@export var enable_regeneration := false
+
 var XP_PER_LEVEL := 100.0 * level
 var health := MAX_STAT
 var stamina := MAX_STAT
@@ -17,7 +19,8 @@ func _ready() -> void:
 	_log_all_stats("ready")
 
 func _process(delta: float) -> void:
-	_regenerate(delta)
+	if enable_regeneration:
+		_regenerate(delta)
 
 func _regenerate(delta: float) -> void:
 	_modify_core_stat("health", HEALTH_REGEN_RATE * delta, 0.0, MAX_STAT)

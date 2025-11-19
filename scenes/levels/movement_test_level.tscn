@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://byhmi4owupg24"]
+[gd_scene load_steps=12 format=3 uid="uid://byhmi4owupg24"]
 
 [ext_resource type="PackedScene" uid="uid://d20kn72k08ytb" path="res://scenes/shared/PlayerController.tscn" id="1_tiyb6"]
+[ext_resource type="Script" uid="uid://c1h6h9cxz8dtb" path="res://scenes/levels/hurtbox_area.gd" id="3_ba3xl"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gnott"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -25,6 +26,13 @@ albedo_color = Color(0.4989459, 0, 0.20667791, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_8fgqa"]
 material = SubResource("StandardMaterial3D_tiyb6")
+
+[sub_resource type="BoxMesh" id="BoxMesh_tiyb6"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8fgqa"]
+albedo_color = Color(0.86796814, 0, 0.114011995, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lr7ap"]
 
 [node name="MovementTestLevel" type="Node3D"]
 
@@ -57,11 +65,22 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6999998, 0, 3)
 [node name="Marker4" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.992118, 0, 3)
 
-[node name="RigidBody3D" type="RigidBody3D" parent="."]
+[node name="RigidbodyCrateTest" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3709861, -5.5356827)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidbodyCrateTest"]
 shape = SubResource("BoxShape3D_tiyb6")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidbodyCrateTest"]
 mesh = SubResource("BoxMesh_8fgqa")
+
+[node name="Hurtbox" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7439573, 0, 0)
+script = ExtResource("3_ba3xl")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Hurtbox"]
+mesh = SubResource("BoxMesh_tiyb6")
+surface_material_override/0 = SubResource("StandardMaterial3D_8fgqa")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
+shape = SubResource("BoxShape3D_lr7ap")
