@@ -43,6 +43,7 @@ material = SubResource("StandardMaterial3D_gnott")
 
 [node name="PlayerController" parent="." instance=ExtResource("1_tiyb6")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6656884, 0)
+max_carry_speed_penalty = 1.0
 
 [node name="Marker" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.3, 0, -3)
