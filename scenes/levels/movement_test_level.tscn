@@ -1,7 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://byhmi4owupg24"]
+[gd_scene load_steps=14 format=3 uid="uid://byhmi4owupg24"]
 
 [ext_resource type="PackedScene" uid="uid://d20kn72k08ytb" path="res://scenes/shared/PlayerController.tscn" id="1_tiyb6"]
 [ext_resource type="Script" uid="uid://b5mujopmnl3f" path="res://scenes/levels/hurtbox_area.gd" id="3_ba3xl"]
+[ext_resource type="PackedScene" uid="uid://br7t2su706582" path="res://scenes/enemies/Enemy.tscn" id="3_lr7ap"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gnott"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -84,3 +85,6 @@ surface_material_override/0 = SubResource("StandardMaterial3D_8fgqa")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
 shape = SubResource("BoxShape3D_lr7ap")
+
+[node name="EnemyCharacter" parent="Hurtbox" instance=ExtResource("3_lr7ap")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1, 6)
