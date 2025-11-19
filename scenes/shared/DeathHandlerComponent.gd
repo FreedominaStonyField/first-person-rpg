@@ -66,6 +66,8 @@ func _spawn_ragdoll() -> void:
 	_ragdoll = ragdoll
 	var visuals := _collect_mesh_instances(_actor_root)
 	_transfer_meshes_to_ragdoll(visuals)
+	var labels := _collect_label_instances(_actor_root)
+	_reparent_labels_to_ragdoll(labels)
 	for shape in shapes:
 		var clone := _duplicate_shape(shape)
 		ragdoll.add_child(clone)
@@ -88,6 +90,29 @@ func _collect_mesh_instances(root: Node) -> Array:
 		elif child is Node:
 			visuals += _collect_mesh_instances(child)
 	return visuals
+
+func _collect_label_instances(root: Node) -> Array:
+	var labels := []
+	for child in root.get_children():
+		if child is Label3D:
+			labels.append(child)
+		elif child is Node:
+			labels += _collect_label_instances(child)
+	return labels
+
+func _reparent_labels_to_ragdoll(labels: Array) -> void:
+	if not _ragdoll:
+		return
+	for label in labels:
+		if not label:
+			continue
+		var visual_label := label as Label3D
+		var transform := visual_label.global_transform
+		var old_parent := visual_label.get_parent()
+		if old_parent:
+			old_parent.remove_child(visual_label)
+		_ragdoll.add_child(visual_label)
+		visual_label.global_transform = transform
 
 func _transfer_meshes_to_ragdoll(meshes: Array) -> void:
 	if not _ragdoll:
