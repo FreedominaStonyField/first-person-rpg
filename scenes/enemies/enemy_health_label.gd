@@ -1,6 +1,6 @@
 extends Label3D
 
-@onready var stats: PlayerStats = get_parent().get_node_or_null("StatsComponent") as PlayerStats
+@onready var stats: ActorStats = get_parent().get_node_or_null("StatsComponent") as ActorStats
 
 func _ready() -> void:
 	billboard = BaseMaterial3D.BILLBOARD_ENABLED

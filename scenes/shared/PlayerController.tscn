@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://d20kn72k08ytb"]
 
 [ext_resource type="Script" uid="uid://bvilbtbxnls45" path="res://scenes/shared/player_controller.gd" id="1_v58sa"]
-[ext_resource type="Script" uid="uid://ckxwp5fuwh5df" path="res://scenes/shared/PlayerStats.gd" id="2_80j70"]
+[ext_resource type="Script" uid="uid://ckxwp5fuwh5df" path="res://scenes/shared/ActorStats.gd" id="2_80j70"]
 [ext_resource type="PackedScene" uid="uid://stats_component_scene" path="res://scenes/shared/StatsComponent.tscn" id="3"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wae83"]

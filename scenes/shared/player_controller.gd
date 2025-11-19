@@ -8,7 +8,7 @@ const JUMP_VELOCITY = 4.5
 @export var sprint_action := "sprint"
 @export var stats_path: NodePath
 
-var stats: PlayerStats = null
+var stats: ActorStats = null
 var is_sprinting := false
 
 @export var mouse_sensitivity := Vector2(0.15, 0.15)
@@ -32,9 +32,9 @@ func _ready() -> void:
 	if stats_path:
 		var node := get_node_or_null(stats_path)
 		if node:
-			stats = node as PlayerStats
+			stats = node as ActorStats
 			if not stats:
-				push_error("PlayerController: stats_path must point to a PlayerStats node.")
+				push_error("PlayerController: stats_path must point to an ActorStats node.")
 		else:
 			push_error("PlayerController: stats_path is not pointing to a valid node.")
 
