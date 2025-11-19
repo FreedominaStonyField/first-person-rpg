@@ -1,21 +1,22 @@
-[gd_scene load_steps=5 format=3 uid="uid://enemy_scene"]
+[gd_scene load_steps=5 format=3 uid="uid://br7t2su706582"]
 
-[ext_resource type="PackedScene" uid="uid://stats_component_scene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_red"]
-albedo_color = Color(1, 0, 0, 1)
-
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_red"]
 
-[node name="Enemy" type="CharacterBody3D"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hpe7p"]
+albedo_color = Color(0.21822837, 0.47627217, 0.72841895, 1)
+metallic = 1.0
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Enemy"]
+[node name="EnemyCharacter" type="CharacterBody3D"]
+
+[node name="EnemyCharacter#CapsuleCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_red")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Enemy"]
+[node name="EnemyCharacter#CapsuleVisual" type="MeshInstance3D" parent="."]
 mesh = SubResource("CapsuleMesh_red")
-material_override/0 = SubResource("StandardMaterial3D_red")
+surface_material_override/0 = SubResource("StandardMaterial3D_hpe7p")
 
-[node name="Stats" parent="Enemy" instance=ExtResource("1")]
+[node name="EnemyCharacter#StatsComponent" parent="." instance=ExtResource("1")]
