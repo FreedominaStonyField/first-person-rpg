@@ -7,6 +7,7 @@
 
 [node name="PlayerController" type="CharacterBody3D"]
 script = ExtResource("1_v58sa")
+stats_path = NodePath("Stats")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_wae83")

@@ -1,3 +1,4 @@
+class_name PlayerStats
 extends Node
 
 const MAX_STAT := 100.0

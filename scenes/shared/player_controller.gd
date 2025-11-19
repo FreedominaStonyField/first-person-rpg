@@ -3,6 +3,14 @@ extends CharacterBody3D
 const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
 
+@export var sprint_multiplier := 1.6
+@export var sprint_stamina_drain_per_second := 20.0
+@export var sprint_action := "sprint"
+@export var stats_path: NodePath
+
+var stats: PlayerStats = null
+var is_sprinting := false
+
 @export var mouse_sensitivity := Vector2(0.15, 0.15)
 @export var max_look_angle := 88.0
 @export var pickup_range := 4.0
@@ -21,6 +29,14 @@ func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	if not camera:
 		push_error("PlayerController is missing the Camera3D child.")
+	if stats_path:
+		var node := get_node_or_null(stats_path)
+		if node:
+			stats = node as PlayerStats
+			if not stats:
+				push_error("PlayerController: stats_path must point to a PlayerStats node.")
+		else:
+			push_error("PlayerController: stats_path is not pointing to a valid node.")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and camera:
@@ -36,7 +52,10 @@ func _process(_delta: float) -> void:
 	var mouse_pos := get_viewport().get_mouse_position()
 	var pos := global_position
 	var rot := rotation_degrees
-	debug_label.text = "Mouse: (%.0f, %.0f)\nPosition: (%.2f, %.2f, %.2f)\nRotation: (%.1f, %.1f, %.1f)" % [
+	var stamina_value: float = stats.stamina if stats else 0.0
+
+	var sprint_state := "Sprinting" if is_sprinting else "Walking"
+	debug_label.text = "Mouse: (%.0f, %.0f)\nPosition: (%.2f, %.2f, %.2f)\nRotation: (%.1f, %.1f, %.1f)\nStamina: %.1f\nState: %s" % [
 		mouse_pos.x,
 		mouse_pos.y,
 		pos.x,
@@ -45,6 +64,8 @@ func _process(_delta: float) -> void:
 		rot.x,
 		rot.y,
 		rot.z,
+		stamina_value,
+		sprint_state,
 	]
 
 func _attempt_pickup() -> void:
@@ -132,8 +153,15 @@ func _physics_process(delta: float) -> void:
 		if held_body and held_body is RigidBody3D:
 			var body := held_body as RigidBody3D
 			speed_penalty = clamp(body.mass / carry_mass_threshold, 0.0, max_carry_speed_penalty)
-		velocity.x = direction.x * SPEED * (1.0 - speed_penalty)
-		velocity.z = direction.z * SPEED * (1.0 - speed_penalty)
+		var target_speed := SPEED
+		is_sprinting = false
+		if stats and Input.is_action_pressed(sprint_action):
+			var stamina_cost := sprint_stamina_drain_per_second * delta
+			if stats.spend_stamina(stamina_cost):
+				target_speed *= sprint_multiplier
+				is_sprinting = true
+		velocity.x = direction.x * target_speed * (1.0 - speed_penalty)
+		velocity.z = direction.z * target_speed * (1.0 - speed_penalty)
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
