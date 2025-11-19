@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://br7t2su706582"]
+[gd_scene load_steps=7 format=3 uid="uid://br7t2su706582"]
 
 [ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
 [ext_resource type="Script" uid="uid://dptpyua3c2j1a" path="res://scenes/enemies/enemy_health_label.gd" id="2"]
+[ext_resource type="Script" uid="uid://cnrcn6yeejvjq" path="res://scenes/shared/DeathHandlerComponent.gd" id="3_lk9dp"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
 
@@ -26,3 +27,6 @@ surface_material_override/0 = SubResource("StandardMaterial3D_red")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
 text = "HP: 100"
 script = ExtResource("2")
+
+[node name="EnemyCharacter#DeathHandlerComponent" type="Node3D" parent="."]
+script = ExtResource("3_lk9dp")

@@ -138,6 +138,11 @@ func _push_collided_bodies(direction: Vector3) -> void:
 			var impulse: Vector3 = push_dir * (push_force / mass)
 			body.apply_impulse(contact_offset, impulse)
 
+func _on_death_cleanup() -> void:
+	_release_held_body()
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	is_sprinting = false
+
 func _physics_process(delta: float) -> void:
 	# Add the gravity.
 	if not is_on_floor():

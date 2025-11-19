@@ -1,6 +1,8 @@
 class_name ActorStats
 extends Node
 
+signal died(actor: Node)
+
 const MAX_STAT := 100.0
 const HEALTH_REGEN_RATE := 1.5
 const STAMINA_REGEN_RATE := 8.0
@@ -14,6 +16,7 @@ var stamina := MAX_STAT
 var magicka := MAX_STAT
 var level := 1
 var xp := 0.0
+var _is_alive := true
 
 func _ready() -> void:
 	_log_all_stats("ready")
@@ -28,9 +31,15 @@ func _regenerate(delta: float) -> void:
 	_modify_core_stat("magicka", MAGICKA_REGEN_RATE * delta, 0.0, MAX_STAT)
 
 func take_damage(amount: float) -> void:
+	if amount <= 0.0 or not _is_alive:
+		return
 	_modify_core_stat("health", -abs(amount), 0.0, MAX_STAT)
 	if health <= 0.0:
-		print("ActorStats: Health depleted; trigger death handling.")
+		health = 0.0
+		if _is_alive:
+			_is_alive = false
+			print("ActorStats: Health depleted; triggering death handling.")
+			emit_signal("died", get_parent())
 
 func restore_health(amount: float) -> void:
 	_modify_core_stat("health", abs(amount), 0.0, MAX_STAT)
