@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3 uid="uid://enemy_scene"]
+
+[ext_resource type="PackedScene" uid="uid://stats_component_scene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_red"]
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_red"]
+
+[node name="Enemy" type="CharacterBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Enemy"]
+shape = SubResource("CapsuleShape3D_red")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Enemy"]
+mesh = SubResource("CapsuleMesh_red")
+material_override/0 = SubResource("StandardMaterial3D_red")
+
+[node name="Stats" parent="Enemy" instance=ExtResource("1")]
