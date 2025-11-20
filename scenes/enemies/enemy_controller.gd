@@ -5,6 +5,15 @@ class_name EnemyController
 @export var attack_cooldown := 1.2
 @export var attack_area_path: NodePath
 @export var attack_ray_path: NodePath
+@export var navigation_agent_path: NodePath = NodePath("EnemyCharacter#NavigationAgent")
+@export var move_speed := 3.5
+@export var gravity := ProjectSettings.get_setting("physics/3d/default_gravity") as float
+@export var max_fall_speed := 50.0
+@export var stopping_distance := 1.5
+
+var navigation_agent: NavigationAgent3D = null
+var player: Node3D = null
+var _last_player_position: Vector3 = Vector3.ZERO
 
 var _attack_area: Area3D
 var _attack_ray: RayCast3D
@@ -13,6 +22,8 @@ var _tracked_targets := {}
 var _self_stats: ActorStats = null
 
 func _ready() -> void:
+	player = _find_player()
+	navigation_agent = _resolve_navigation_agent()
 	_attack_area = _resolve_attack_area()
 	_attack_ray = _resolve_attack_ray()
 	_self_stats = _find_actor_stats(self)
@@ -22,6 +33,14 @@ func _ready() -> void:
 		_attack_area.connect("body_exited", Callable(self, "_on_attack_body_exited"))
 	if _self_stats and not _self_stats.is_connected("died", Callable(self, "_on_self_died")):
 		_self_stats.connect("died", Callable(self, "_on_self_died"))
+	if navigation_agent:
+		navigation_agent.target_desired_distance = stopping_distance
+	if player:
+		_last_player_position = player.global_transform.origin
+		print("EnemyController: found player at ", _last_player_position)
+
+func _process(_delta: float) -> void:
+	_track_player_position()
 
 func _physics_process(delta: float) -> void:
 	if _cooldown_remaining > 0.0:
@@ -29,14 +48,14 @@ func _physics_process(delta: float) -> void:
 
 	if not _can_attack():
 		return
-
+	
 	var target_stats := _select_target_stats()
 	if not target_stats:
 		return
 
 	target_stats.take_damage(attack_damage)
 	_cooldown_remaining = attack_cooldown
-
+	
 func _resolve_attack_area() -> Area3D:
 	if not attack_area_path or attack_area_path == NodePath(""):
 		return null
@@ -54,6 +73,26 @@ func _resolve_attack_ray() -> RayCast3D:
 		return node as RayCast3D
 	push_warning("EnemyController: attack_ray_path must point to a RayCast3D.")
 	return null
+
+func _resolve_navigation_agent() -> NavigationAgent3D:
+	if not navigation_agent_path or navigation_agent_path == NodePath(""):
+		push_warning("EnemyController: navigation_agent_path is not set.")
+		return null
+
+	var node := get_node_or_null(navigation_agent_path)
+	if node and node is NavigationAgent3D:
+		return node as NavigationAgent3D
+
+	push_warning("EnemyController: navigation_agent_path must point to a NavigationAgent3D.")
+	return null
+
+func _track_player_position() -> void:
+	if not player:
+		return
+	var player_position := player.global_transform.origin
+	if player_position != _last_player_position:
+		_last_player_position = player_position
+		print("EnemyController: player moved to ", player_position)
 
 func _can_attack() -> bool:
 	if _self_stats and _self_stats.health <= 0.0:
@@ -119,6 +158,19 @@ func _disable_attack_loops() -> void:
 		_attack_ray.enabled = false
 	set_physics_process(false)
 	set_process(false)
+
+func _find_player() -> Node3D:
+	var players := get_tree().get_nodes_in_group("player")
+	if players.size() == 0:
+		push_warning("EnemyController: no player found in 'player' group.")
+		return null
+
+	var player_node := players[0]
+	if player_node and player_node is Node3D:
+		return player_node as Node3D
+
+	push_warning("EnemyController: player group entry is not a Node3D.")
+	return null
 
 func _find_actor_stats(root: Object) -> ActorStats:
 	if not root:

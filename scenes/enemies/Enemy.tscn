@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
 [ext_resource type="Script" uid="uid://dptpyua3c2j1a" path="res://scenes/enemies/enemy_health_label.gd" id="2"]
 [ext_resource type="Script" uid="uid://cnrcn6yeejvjq" path="res://scenes/shared/DeathHandlerComponent.gd" id="3_lk9dp"]
-[ext_resource type="Script" path="res://scenes/enemies/enemy_controller.gd" id="4_cye0q"]
+[ext_resource type="Script" uid="uid://cux4ue1l25rak" path="res://scenes/enemies/enemy_controller.gd" id="4_cye0q"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
 
@@ -19,6 +19,9 @@ radius = 1.6
 script = ExtResource("4_cye0q")
 attack_area_path = NodePath("EnemyCharacter#AttackRangeArea")
 attack_ray_path = NodePath("EnemyCharacter#SwipeRay")
+navigation_agent_path = NodePath("EnemyCharacter#NavigationAgent")
+
+[node name="EnemyCharacter#NavigationAgent" type="NavigationAgent3D" parent="."]
 
 [node name="EnemyCharacter#CapsuleCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_red")
@@ -37,10 +40,6 @@ shape = SubResource("SphereShape3D_attack")
 [node name="EnemyCharacter#SwipeRay" type="RayCast3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 target_position = Vector3(0, 0, -2)
-collide_with_areas = false
-exclude_parent = true
-
-[node name="EnemyCharacter#NavigationAgent" type="NavigationAgent3D" parent="."]
 
 [node name="EnemyCharacter#StatsComponent" parent="." instance=ExtResource("1")]
 
