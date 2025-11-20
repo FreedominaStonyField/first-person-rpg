@@ -5,6 +5,7 @@ class_name GameOverHandler
 @export var respawn_delay_min := 1.0
 @export var respawn_delay_max := 3.0
 @export var overlay_font_size := 64
+@export var overlay_fade_time := 2.5
 
 var _player_controller: Node = null
 var _actor_stats: ActorStats = null
@@ -12,12 +13,17 @@ var _overlay_layer: CanvasLayer = null
 var _overlay_background: ColorRect = null
 var _overlay_label: Label = null
 var _game_over_active := false
+var _overlay_tween: Tween = null
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
 	_create_overlay()
 	_resolve_player()
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("quick load"):
+		_skip_overlay_fade()
 
 func _create_overlay() -> void:
 	if _overlay_layer:
@@ -68,7 +74,7 @@ func _resolve_player() -> void:
 		push_warning("GameOverHandler: player_path is not configured.")
 		return
 
-	_player_controller = get_node_or_null(player_path)
+	_player_controller = _resolve_node_from_path(player_path)
 	if not _player_controller:
 		push_warning("GameOverHandler: could not find player controller at %s." % player_path)
 		return
@@ -95,7 +101,7 @@ func _on_player_died(actor: Node) -> void:
 		delay = _rng.randf_range(min_delay, max_delay)
 
 	await get_tree().create_timer(delay).timeout
-	get_tree().reload_current_scene()
+	_reload_scene()
 
 func _disable_player() -> void:
 	if not _player_controller:
@@ -114,10 +120,56 @@ func _disable_player() -> void:
 		(camera as Camera3D).current = false
 
 func _show_overlay() -> void:
+	_cancel_overlay_tween()
+
 	if _overlay_background:
 		_overlay_background.visible = true
+		_overlay_background.modulate.a = 0.0
 	if _overlay_label:
 		_overlay_label.visible = true
+		_overlay_label.modulate.a = 0.0
+
+	if overlay_fade_time <= 0.0:
+		_skip_overlay_fade()
+		return
+
+	_overlay_tween = create_tween()
+	if _overlay_background:
+		_overlay_tween.tween_property(_overlay_background, "modulate:a", 1.0, overlay_fade_time)
+	if _overlay_label:
+		_overlay_tween.parallel().tween_property(_overlay_label, "modulate:a", 1.0, overlay_fade_time)
+
+func _skip_overlay_fade() -> void:
+	_cancel_overlay_tween()
+	if _overlay_background:
+		_overlay_background.visible = true
+		_overlay_background.modulate.a = 1.0
+	if _overlay_label:
+		_overlay_label.visible = true
+		_overlay_label.modulate.a = 1.0
+
+func _cancel_overlay_tween() -> void:
+	if _overlay_tween and _overlay_tween.is_running():
+		_overlay_tween.kill()
+	_overlay_tween = null
+
+func _reload_scene() -> void:
+	var tree := get_tree()
+	if not tree:
+		push_error("GameOverHandler: SceneTree unavailable; cannot reload the scene.")
+		return
+
+	var reload_result := tree.reload_current_scene()
+	if reload_result == OK:
+		return
+
+	var current_scene := tree.current_scene
+	if current_scene and current_scene.scene_file_path != "":
+		var change_result := tree.change_scene_to_file(current_scene.scene_file_path)
+		if change_result != OK:
+			push_error("GameOverHandler: Failed to reload scene (error %d)." % change_result)
+	else:
+		push_error("GameOverHandler: No current scene path available to reload.")
 
 func _find_actor_stats(node: Node) -> ActorStats:
 	if not node:
@@ -131,4 +183,20 @@ func _find_actor_stats(node: Node) -> ActorStats:
 			var found := _find_actor_stats(child)
 			if found:
 				return found
+	return null
+
+func _resolve_node_from_path(path: NodePath) -> Node:
+	if not path or path == NodePath(""):
+		return null
+
+	var node := get_node_or_null(path)
+	if node:
+		return node
+
+	var scene_root := get_tree().current_scene
+	if scene_root:
+		node = scene_root.get_node_or_null(path)
+		if node:
+			return node
+
 	return null
