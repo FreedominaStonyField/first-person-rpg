@@ -1,8 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://br7t2su706582"]
+[gd_scene load_steps=9 format=3 uid="uid://br7t2su706582"]
 
 [ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
 [ext_resource type="Script" uid="uid://dptpyua3c2j1a" path="res://scenes/enemies/enemy_health_label.gd" id="2"]
 [ext_resource type="Script" uid="uid://cnrcn6yeejvjq" path="res://scenes/shared/DeathHandlerComponent.gd" id="3_lk9dp"]
+[ext_resource type="Script" path="res://scenes/enemies/enemy_controller.gd" id="4_cye0q"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
 
@@ -11,7 +12,13 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_red"]
 albedo_color = Color(1, 0, 0, 1)
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_attack"]
+radius = 1.6
+
 [node name="EnemyCharacter" type="CharacterBody3D"]
+script = ExtResource("4_cye0q")
+attack_area_path = NodePath("EnemyCharacter#AttackRangeArea")
+attack_ray_path = NodePath("EnemyCharacter#SwipeRay")
 
 [node name="EnemyCharacter#CapsuleCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_red")
@@ -20,6 +27,18 @@ debug_color = Color(0, 0.4813334, 0.76, 1)
 [node name="EnemyCharacter#CapsuleVisual" type="MeshInstance3D" parent="."]
 mesh = SubResource("CapsuleMesh_red")
 surface_material_override/0 = SubResource("StandardMaterial3D_red")
+
+[node name="EnemyCharacter#AttackRangeArea" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="EnemyCharacter#AttackRangeCollision" type="CollisionShape3D" parent="EnemyCharacter#AttackRangeArea"]
+shape = SubResource("SphereShape3D_attack")
+
+[node name="EnemyCharacter#SwipeRay" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+target_position = Vector3(0, 0, -2)
+collide_with_areas = false
+exclude_parent = true
 
 [node name="EnemyCharacter#StatsComponent" parent="." instance=ExtResource("1")]
 
