@@ -20,6 +20,8 @@ func _ready() -> void:
 	if _attack_area:
 		_attack_area.connect("body_entered", Callable(self, "_on_attack_body_entered"))
 		_attack_area.connect("body_exited", Callable(self, "_on_attack_body_exited"))
+	if _self_stats and not _self_stats.is_connected("died", Callable(self, "_on_self_died")):
+		_self_stats.connect("died", Callable(self, "_on_self_died"))
 
 func _physics_process(delta: float) -> void:
 	if _cooldown_remaining > 0.0:
@@ -101,6 +103,22 @@ func _on_attack_body_entered(body: Node) -> void:
 func _on_attack_body_exited(body: Node) -> void:
 	if _tracked_targets.has(body):
 		_tracked_targets.erase(body)
+
+func _on_self_died(actor: Node) -> void:
+	if actor != self:
+		return
+	_disable_attack_loops()
+
+func _disable_attack_loops() -> void:
+	_cooldown_remaining = INF
+	_tracked_targets.clear()
+	if _attack_area:
+		_attack_area.monitoring = false
+		_attack_area.set_deferred("monitoring", false)
+	if _attack_ray:
+		_attack_ray.enabled = false
+	set_physics_process(false)
+	set_process(false)
 
 func _find_actor_stats(root: Object) -> ActorStats:
 	if not root:
