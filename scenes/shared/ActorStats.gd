@@ -1,6 +1,8 @@
 class_name ActorStats
 extends Node
 
+signal core_stat_changed(stat_name: String, previous_value: float, current_value: float, max_value: float)
+signal damaged(amount: float, current_health: float, max_health: float)
 signal died(actor: Node)
 
 const MAX_STAT := 100.0
@@ -33,7 +35,11 @@ func _regenerate(delta: float) -> void:
 func take_damage(amount: float) -> void:
 	if amount <= 0.0 or not _is_alive:
 		return
+	var previous_health := health
 	_modify_core_stat("health", -abs(amount), 0.0, MAX_STAT)
+	var applied_damage :float = max(0.0, previous_health - health)
+	if applied_damage > 0.0:
+		emit_signal("damaged", applied_damage, health, MAX_STAT)
 	if health <= 0.0:
 		health = 0.0
 		if _is_alive:
@@ -89,6 +95,7 @@ func _modify_core_stat(stat_name: String, delta: float, clamp_min: float, clamp_
 		return
 	_set_core_stat(stat_name, desired_value)
 	_log_stat_change(stat_name, before_value, desired_value)
+	emit_signal("core_stat_changed", stat_name, before_value, desired_value, clamp_max)
 
 func _get_core_stat(stat_name: String) -> float:
 	match stat_name:

@@ -1,9 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://d20kn72k08ytb"]
+[gd_scene load_steps=6 format=3 uid="uid://d20kn72k08ytb"]
 
 [ext_resource type="Script" uid="uid://bvilbtbxnls45" path="res://scenes/shared/player_controller.gd" id="1_v58sa"]
-[ext_resource type="Script" uid="uid://ckxwp5fuwh5df" path="res://scenes/shared/ActorStats.gd" id="2_80j70"]
-[ext_resource type="PackedScene" uid="uid://stats_component_scene" path="res://scenes/shared/StatsComponent.tscn" id="3"]
-[ext_resource type="Script" path="res://scenes/shared/DeathHandlerComponent.gd" id="4_jl5kh"]
+[ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="3"]
+[ext_resource type="Script" uid="uid://cnrcn6yeejvjq" path="res://scenes/shared/DeathHandlerComponent.gd" id="4_jl5kh"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PlayerHud.tscn" id="5_qcruy"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wae83"]
 
@@ -19,6 +19,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 current = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="PlayerHud" parent="CanvasLayer" instance=ExtResource("5_qcruy")]
+layout_mode = 3
+anchors_preset = 15
+stats_path = NodePath("../../Stats")
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer"]
 text = "Mouse:

@@ -1,0 +1,69 @@
+[gd_scene load_steps=2 format=3 uid="uid://player_hud_scene"]
+
+[ext_resource type="Script" path="res://scenes/ui/player_hud.gd" id="1_5npdb"]
+
+[node name="PlayerHud" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_5npdb")
+
+[node name="DamageFlashOverlay" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.6, 0, 0, 0)
+mouse_filter = 2
+visible = false
+
+[node name="HudMarginContainer" type="MarginContainer" parent="."]
+anchor_left = 0.02
+anchor_top = 1.0
+anchor_right = 0.35
+anchor_bottom = 1.0
+offset_top = -170.0
+offset_bottom = -24.0
+mouse_filter = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VitalsBox" type="VBoxContainer" parent="HudMarginContainer"]
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="HealthRow" type="HBoxContainer" parent="HudMarginContainer/VitalsBox"]
+mouse_filter = 2
+
+[node name="HealthLabel" type="Label" parent="HudMarginContainer/VitalsBox/HealthRow"]
+custom_minimum_size = Vector2(90, 0)
+text = "Health"
+mouse_filter = 2
+
+[node name="HealthBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox/HealthRow"]
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="StaminaRow" type="HBoxContainer" parent="HudMarginContainer/VitalsBox"]
+mouse_filter = 2
+
+[node name="StaminaLabel" type="Label" parent="HudMarginContainer/VitalsBox/StaminaRow"]
+custom_minimum_size = Vector2(90, 0)
+text = "Stamina"
+mouse_filter = 2
+
+[node name="StaminaBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox/StaminaRow"]
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="MagickaRow" type="HBoxContainer" parent="HudMarginContainer/VitalsBox"]
+mouse_filter = 2
+
+[node name="MagickaLabel" type="Label" parent="HudMarginContainer/VitalsBox/MagickaRow"]
+custom_minimum_size = Vector2(90, 0)
+text = "Magicka"
+mouse_filter = 2
+
+[node name="MagickaBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox/MagickaRow"]
+size_flags_horizontal = 3
+mouse_filter = 2

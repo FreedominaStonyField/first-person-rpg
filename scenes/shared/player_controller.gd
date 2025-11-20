@@ -23,6 +23,7 @@ var is_sprinting := false
 
 @onready var camera: Camera3D = $Camera3D
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
+@onready var player_hud: PlayerHud = $CanvasLayer/PlayerHud
 
 var pitch := 0.0
 var held_body: RigidBody3D = null
@@ -39,6 +40,8 @@ func _ready() -> void:
 				push_error("PlayerController: stats_path must point to an ActorStats node.")
 		else:
 			push_error("PlayerController: stats_path is not pointing to a valid node.")
+	if player_hud and stats:
+		player_hud.set_stats(stats)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and camera:
