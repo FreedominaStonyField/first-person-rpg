@@ -23,6 +23,8 @@ current = true
 [node name="PlayerHud" parent="CanvasLayer" instance=ExtResource("5_qcruy")]
 layout_mode = 3
 anchors_preset = 15
+grow_horizontal = 2
+grow_vertical = 2
 stats_path = NodePath("../../Stats")
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer"]
@@ -31,6 +33,7 @@ Position:
 Rotation:"
 
 [node name="Stats" parent="." instance=ExtResource("3")]
+enable_regeneration = true
 
 [node name="DeathHandlerComponent" type="Node3D" parent="."]
 script = ExtResource("4_jl5kh")

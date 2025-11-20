@@ -30,40 +30,16 @@ theme_override_constants/margin_bottom = 12
 
 [node name="VitalsBox" type="VBoxContainer" parent="HudMarginContainer"]
 mouse_filter = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
-[node name="HealthRow" type="HBoxContainer" parent="HudMarginContainer/VitalsBox"]
-mouse_filter = 2
-
-[node name="HealthLabel" type="Label" parent="HudMarginContainer/VitalsBox/HealthRow"]
-custom_minimum_size = Vector2(90, 0)
-text = "Health"
-mouse_filter = 2
-
-[node name="HealthBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox/HealthRow"]
+[node name="HealthBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox"]
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="StaminaRow" type="HBoxContainer" parent="HudMarginContainer/VitalsBox"]
-mouse_filter = 2
-
-[node name="StaminaLabel" type="Label" parent="HudMarginContainer/VitalsBox/StaminaRow"]
-custom_minimum_size = Vector2(90, 0)
-text = "Stamina"
-mouse_filter = 2
-
-[node name="StaminaBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox/StaminaRow"]
+[node name="StaminaBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox"]
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="MagickaRow" type="HBoxContainer" parent="HudMarginContainer/VitalsBox"]
-mouse_filter = 2
-
-[node name="MagickaLabel" type="Label" parent="HudMarginContainer/VitalsBox/MagickaRow"]
-custom_minimum_size = Vector2(90, 0)
-text = "Magicka"
-mouse_filter = 2
-
-[node name="MagickaBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox/MagickaRow"]
+[node name="MagickaBar" type="ProgressBar" parent="HudMarginContainer/VitalsBox"]
 size_flags_horizontal = 3
 mouse_filter = 2
