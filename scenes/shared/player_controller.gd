@@ -2,6 +2,8 @@ extends CharacterBody3D
 
 const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
+const ATTACK_RANGE := 10.0
+const ATTACK_DAMAGE := 20.0
 
 @export var sprint_multiplier := 1.6
 @export var sprint_stamina_drain_per_second := 20.0
@@ -187,3 +189,47 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	_push_collided_bodies(direction)
+
+	if Input.is_action_just_pressed("attack_main") or Input.is_action_just_pressed("attack_off_hand"):
+		_perform_attack()
+
+func _perform_attack() -> void:
+	if not camera:
+		return
+
+	var viewport := camera.get_viewport()
+	if not viewport:
+		return
+
+	var center := viewport.get_visible_rect().size * 0.5
+	var origin := camera.project_ray_origin(center)
+	var direction := camera.project_ray_normal(center)
+	var target := origin + direction * ATTACK_RANGE
+
+	var space := get_world_3d().direct_space_state
+	var params := PhysicsRayQueryParameters3D.create(origin, target)
+	params.exclude = [self]
+	params.collide_with_areas = false
+	params.collide_with_bodies = true
+
+	var result := space.intersect_ray(params)
+	if not result:
+		return
+
+	var collider: Object = result.get("collider")
+	var stats := _find_actor_stats(collider)
+	if stats:
+		stats.take_damage(ATTACK_DAMAGE)
+
+func _find_actor_stats(root: Object) -> ActorStats:
+	if not root:
+		return null
+	if root is ActorStats:
+		return root
+	if root is Node:
+		for child in (root as Node).get_children():
+			if child is Node:
+				var candidate := _find_actor_stats(child)
+				if candidate:
+					return candidate
+	return null
