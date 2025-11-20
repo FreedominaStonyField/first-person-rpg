@@ -73,11 +73,27 @@ func _spawn_ragdoll() -> void:
 		ragdoll.add_child(clone)
 		shape.disabled = true
 
+func _is_child_of_physics_body(node: Node) -> bool:
+	var current := node.get_parent()
+	while current:
+		if current is Area3D:
+			return false
+		if current is PhysicsBody3D:
+			return true
+		if current == _actor_root:
+			break
+		current = current.get_parent()
+	return false
+
 func _collect_collision_shapes(root: Node) -> Array:
 	var shapes := []
 	for child in root.get_children():
 		if child is CollisionShape3D:
-			shapes.append(child as CollisionShape3D)
+			if _is_child_of_physics_body(child):
+				shapes.append(child as CollisionShape3D)
+			continue
+		if child is Area3D:
+			continue
 		elif child is Node:
 			shapes += _collect_collision_shapes(child)
 	return shapes
@@ -86,7 +102,11 @@ func _collect_mesh_instances(root: Node) -> Array:
 	var visuals := []
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			visuals.append(child)
+			if _is_child_of_physics_body(child):
+				visuals.append(child)
+			continue
+		if child is Area3D:
+			continue
 		elif child is Node:
 			visuals += _collect_mesh_instances(child)
 	return visuals
