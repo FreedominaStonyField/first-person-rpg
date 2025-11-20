@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://byhmi4owupg24"]
+[gd_scene load_steps=16 format=3 uid="uid://byhmi4owupg24"]
 
 [ext_resource type="PackedScene" uid="uid://d20kn72k08ytb" path="res://scenes/shared/PlayerController.tscn" id="1_tiyb6"]
 [ext_resource type="Script" uid="uid://b5mujopmnl3f" path="res://scenes/levels/hurtbox_area.gd" id="3_ba3xl"]
@@ -17,6 +17,10 @@ background_mode = 2
 sky = SubResource("Sky_tiyb6")
 tonemap_mode = 2
 glow_enabled = true
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_walkable"]
+vertices = PackedVector3Array(-249.5, 0, -249.5, -249.5, 0, 249.5, 249.5, 0, 249.5, 249.5, 0, -249.5)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gnott"]
 albedo_color = Color(0.21009672, 0.10268099, 0, 1)
@@ -45,7 +49,10 @@ environment = SubResource("Environment_8fgqa")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Ground" type="CSGBox3D" parent="."]
+[node name="GroundNavigationRegion" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_walkable")
+
+[node name="Ground" type="CSGBox3D" parent="GroundNavigationRegion"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 use_collision = true
 size = Vector3(500, 1, 500)
