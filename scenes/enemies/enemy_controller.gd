@@ -43,6 +43,9 @@ func _process(_delta: float) -> void:
 	_track_player_position()
 
 func _physics_process(delta: float) -> void:
+	_apply_gravity(delta)
+	move_and_slide()
+
 	if _cooldown_remaining > 0.0:
 		_cooldown_remaining = max(0.0, _cooldown_remaining - delta)
 
@@ -73,6 +76,13 @@ func _resolve_attack_ray() -> RayCast3D:
 		return node as RayCast3D
 	push_warning("EnemyController: attack_ray_path must point to a RayCast3D.")
 	return null
+
+func _apply_gravity(delta: float) -> void:
+	if is_on_floor():
+		return
+	velocity += get_gravity() * delta
+	if max_fall_speed > 0.0:
+		velocity.y = clamp(velocity.y, -max_fall_speed, max_fall_speed)
 
 func _resolve_navigation_agent() -> NavigationAgent3D:
 	if not navigation_agent_path or navigation_agent_path == NodePath(""):
