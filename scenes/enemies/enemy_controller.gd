@@ -5,14 +5,18 @@ class_name EnemyController
 @export var attack_cooldown := 1.2
 @export var attack_area_path: NodePath
 @export var attack_ray_path: NodePath
+@export var behavior_state_machine_path: NodePath = NodePath("EnemyCharacter#BehaviorStateMachine")
 @export var navigation_agent_path: NodePath = NodePath("EnemyCharacter#NavigationAgent")
 @export var move_speed := 3.5
 @export var gravity := ProjectSettings.get_setting("physics/3d/default_gravity") as float
 @export var max_fall_speed := 50.0
 @export var stopping_distance := 1.5
+@export var attack_range_margin := 0.5
+@export var flee_health_threshold := 0.25
 
 var navigation_agent: NavigationAgent3D = null
 var player: Node3D = null
+var behavior_state_machine: EnemyBehaviorStateMachine = null
 var _last_player_position: Vector3 = Vector3.ZERO
 
 var _attack_area: Area3D
@@ -24,6 +28,7 @@ var _self_stats: ActorStats = null
 func _ready() -> void:
 	player = _find_player()
 	navigation_agent = _resolve_navigation_agent()
+	behavior_state_machine = _resolve_behavior_state_machine()
 	_attack_area = _resolve_attack_area()
 	_attack_ray = _resolve_attack_ray()
 	_self_stats = _find_actor_stats(self)
@@ -35,15 +40,22 @@ func _ready() -> void:
 		_self_stats.connect("died", Callable(self, "_on_self_died"))
 	if navigation_agent:
 		navigation_agent.target_desired_distance = stopping_distance
+	if behavior_state_machine and player:
+		behavior_state_machine.enter_combat()
 	if player:
 		_last_player_position = player.global_transform.origin
 		print("EnemyController: found player at ", _last_player_position)
 
 func _process(_delta: float) -> void:
+	if behavior_state_machine:
+		behavior_state_machine.process_step(_delta)
+		_update_combat_state()
 	_track_player_position()
 
 func _physics_process(delta: float) -> void:
 	_apply_gravity(delta)
+	if behavior_state_machine:
+		behavior_state_machine.physics_step(delta)
 	move_and_slide()
 
 	if _cooldown_remaining > 0.0:
@@ -51,7 +63,11 @@ func _physics_process(delta: float) -> void:
 
 	if not _can_attack():
 		return
-	
+
+func attempt_attack() -> void:
+	if not _can_attack():
+		return
+
 	var target_stats := _select_target_stats()
 	if not target_stats:
 		return
@@ -96,6 +112,17 @@ func _resolve_navigation_agent() -> NavigationAgent3D:
 	push_warning("EnemyController: navigation_agent_path must point to a NavigationAgent3D.")
 	return null
 
+func _resolve_behavior_state_machine() -> EnemyBehaviorStateMachine:
+	if not behavior_state_machine_path or behavior_state_machine_path == NodePath(""):
+		return null
+
+	var node := get_node_or_null(behavior_state_machine_path)
+	if node and node is EnemyBehaviorStateMachine:
+		return node as EnemyBehaviorStateMachine
+
+	push_warning("EnemyController: behavior_state_machine_path must point to an EnemyBehaviorStateMachine.")
+	return null
+
 func _track_player_position() -> void:
 	if not player:
 		return
@@ -108,6 +135,36 @@ func _can_attack() -> bool:
 	if _self_stats and _self_stats.health <= 0.0:
 		return false
 	return _cooldown_remaining <= 0.0
+
+func _update_combat_state() -> void:
+	if not behavior_state_machine or not behavior_state_machine.combat_state_machine or not player:
+		return
+
+	var combat_machine := behavior_state_machine.combat_state_machine
+
+	# Simple selector: flee if low health, attack if close, otherwise chase.
+	if _should_flee():
+		combat_machine.switch_to_flee()
+		return
+
+	if _is_player_in_attack_range():
+		combat_machine.switch_to_attack()
+		return
+
+	combat_machine.switch_to_chase()
+
+func _is_player_in_attack_range() -> bool:
+	if not player:
+		return false
+	var distance := global_transform.origin.distance_to(player.global_transform.origin)
+	return distance <= (stopping_distance + attack_range_margin)
+
+func _should_flee() -> bool:
+	if not _self_stats:
+		return false
+	if ActorStats.MAX_STAT <= 0.0:
+		return false
+	return (_self_stats.health / ActorStats.MAX_STAT) <= flee_health_threshold
 
 func _select_target_stats() -> ActorStats:
 	var stats := _first_tracked_target_stats()
