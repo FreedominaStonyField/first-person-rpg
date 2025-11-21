@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://cq5ccdeg5uji7"]
 
-[ext_resource type="Script" path="res://scenes/enemies/enemy_dummy.gd" id="1_pwjlt"]
+[ext_resource type="Script" uid="uid://cux4ue1l25rak" path="res://scenes/enemies/enemy_controller.gd" id="1_pwjlt"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 
