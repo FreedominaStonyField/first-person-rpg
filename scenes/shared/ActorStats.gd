@@ -33,19 +33,14 @@ func _regenerate(delta: float) -> void:
 	_modify_core_stat("magicka", MAGICKA_REGEN_RATE * delta, 0.0, MAX_STAT)
 
 func take_damage(amount: float) -> void:
-	if amount <= 0.0 or not _is_alive:
+	if amount <= 0.0:
 		return
-	var previous_health := health
-	_modify_core_stat("health", -abs(amount), 0.0, MAX_STAT)
-	var applied_damage :float = max(0.0, previous_health - health)
-	if applied_damage > 0.0:
-		emit_signal("damaged", applied_damage, health, MAX_STAT)
-	if health <= 0.0:
-		health = 0.0
-		if _is_alive:
-			_is_alive = false
-			print("ActorStats: Health depleted; triggering death handling.")
-			emit_signal("died", get_parent())
+	apply_attack(AttackInfo.melee(amount))
+
+func apply_attack(attack: AttackInfo) -> void:
+	if not attack or not _is_alive:
+		return
+	_apply_attack_damage(attack)
 
 func restore_health(amount: float) -> void:
 	_modify_core_stat("health", abs(amount), 0.0, MAX_STAT)
@@ -127,3 +122,20 @@ func _log_all_stats(context: String) -> void:
 	print("ActorStats (%s): Health %.0f / Stamina %.0f / Magicka %.0f / Level %d / XP %.0f" % [
 		context, health, stamina, magicka, level, xp
 	])
+
+func _apply_attack_damage(attack: AttackInfo) -> void:
+	var damage_amount := attack.damage
+	if damage_amount <= 0.0:
+		return
+
+	var previous_health := health
+	_modify_core_stat("health", -abs(damage_amount), 0.0, MAX_STAT)
+	var applied_damage :float = max(0.0, previous_health - health)
+	if applied_damage > 0.0:
+		emit_signal("damaged", applied_damage, health, MAX_STAT)
+	if health <= 0.0:
+		health = 0.0
+		if _is_alive:
+			_is_alive = false
+			print("ActorStats: Health depleted; triggering death handling.")
+			emit_signal("died", get_parent())

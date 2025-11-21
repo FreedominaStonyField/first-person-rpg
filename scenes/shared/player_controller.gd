@@ -4,6 +4,7 @@ const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
 const ATTACK_RANGE := 10.0
 const ATTACK_DAMAGE := 20.0
+const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
 
 @export var sprint_multiplier := 1.6
 @export var sprint_stamina_drain_per_second := 20.0
@@ -193,10 +194,12 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_push_collided_bodies(direction)
 
-	if Input.is_action_just_pressed("attack_main") or Input.is_action_just_pressed("attack_off_hand"):
-		_perform_attack()
+	if Input.is_action_just_pressed("attack_main"):
+		_perform_attack(AttackInfo.TYPE_MELEE)
+	if Input.is_action_just_pressed("attack_off_hand"):
+		_perform_attack(AttackInfo.TYPE_LIGHTNING)
 
-func _perform_attack() -> void:
+func _perform_attack(attack_type: StringName) -> void:
 	if not camera:
 		return
 
@@ -220,9 +223,24 @@ func _perform_attack() -> void:
 		return
 
 	var collider: Object = result.get("collider")
-	var stats := _find_actor_stats(collider)
-	if stats:
-		stats.take_damage(ATTACK_DAMAGE)
+	var target_stats := _find_actor_stats(collider)
+	if not target_stats:
+		return
+
+	var attack := _build_attack_info(attack_type, origin, direction)
+	if attack:
+		target_stats.apply_attack(attack)
+
+func _build_attack_info(
+	attack_type: StringName,
+	origin: Vector3,
+	direction: Vector3
+) -> AttackInfo:
+	match attack_type:
+		AttackInfo.TYPE_LIGHTNING:
+			return AttackInfo.lightning(ATTACK_DAMAGE, self, origin, direction)
+		_:
+			return AttackInfo.melee(ATTACK_DAMAGE, self, origin, direction)
 
 func _find_actor_stats(root: Object) -> ActorStats:
 	if not root:

@@ -1,7 +1,10 @@
 extends CharacterBody3D
 class_name EnemyController
 
+const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
+
 @export var attack_damage := 15.0
+@export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_cooldown := 1.2
 @export var attack_area_path: NodePath
 @export var attack_ray_path: NodePath
@@ -72,7 +75,11 @@ func attempt_attack() -> void:
 	if not target_stats:
 		return
 
-	target_stats.take_damage(attack_damage)
+	var attack := _build_attack_info()
+	if not attack:
+		return
+
+	target_stats.apply_attack(attack)
 	_cooldown_remaining = attack_cooldown
 	
 func _resolve_attack_area() -> Area3D:
@@ -171,6 +178,21 @@ func _select_target_stats() -> ActorStats:
 	if stats:
 		return stats
 	return _raycast_target_stats()
+
+func _build_attack_info() -> AttackInfo:
+	var origin := global_transform.origin
+	var direction := -global_transform.basis.z
+	if _attack_ray:
+		var target_global := _attack_ray.to_global(_attack_ray.target_position)
+		direction = (target_global - _attack_ray.global_transform.origin).normalized()
+		if direction == Vector3.ZERO:
+			direction = -_attack_ray.global_transform.basis.z
+
+	match attack_type:
+		AttackInfo.TYPE_LIGHTNING:
+			return AttackInfo.lightning(attack_damage, self, origin, direction)
+		_:
+			return AttackInfo.melee(attack_damage, self, origin, direction)
 
 func _first_tracked_target_stats() -> ActorStats:
 	var stale_bodies := []

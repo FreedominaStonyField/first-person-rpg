@@ -1,6 +1,9 @@
 extends Area3D
 
+const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
+
 @export var damage_amount := 10.0
+@export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var debug_print := false
 
 var _tracked_bodies := {}
@@ -32,7 +35,7 @@ func _on_body_entered(body: Node) -> void:
         print_debug("Hurtbox: stats resolved -> %s" % [stats])
 
     if stats:
-        stats.take_damage(damage_amount)
+        stats.apply_attack(_build_attack_info())
         if debug_print:
             print_debug("Hurtbox: applied %f damage to %s (remaining HP %f)" %
                 [damage_amount, stats, stats.health])
@@ -57,3 +60,10 @@ func _find_actor_stats_in_tree(root: Node) -> ActorStats:
             if candidate:
                 return candidate
     return null
+
+func _build_attack_info() -> AttackInfo:
+    match attack_type:
+        AttackInfo.TYPE_LIGHTNING:
+            return AttackInfo.lightning(damage_amount, self, global_transform.origin)
+        _:
+            return AttackInfo.melee(damage_amount, self, global_transform.origin)
