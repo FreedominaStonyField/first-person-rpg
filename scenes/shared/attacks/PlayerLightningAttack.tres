@@ -1,0 +1,6 @@
+[gd_resource type="AttackInfo" format=3]
+
+[resource]
+damage = 20.0
+attack_type = &"lightning"
+magicka_cost = 20.0

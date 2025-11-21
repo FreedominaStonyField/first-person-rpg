@@ -4,12 +4,15 @@ const SPEED = 5.0
 const JUMP_VELOCITY = 4.5
 const ATTACK_RANGE := 10.0
 const ATTACK_DAMAGE := 20.0
+const LIGHTNING_MAGICKA_COST := 20.0
 const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
 
 @export var sprint_multiplier := 1.6
 @export var sprint_stamina_drain_per_second := 20.0
 @export var sprint_action := "sprint"
 @export var stats_path: NodePath
+@export var main_attack_profile: AttackInfo
+@export var offhand_attack_profile: AttackInfo
 
 var stats: ActorStats = null
 var is_sprinting := false
@@ -195,11 +198,11 @@ func _physics_process(delta: float) -> void:
 	_push_collided_bodies(direction)
 
 	if Input.is_action_just_pressed("attack_main"):
-		_perform_attack(AttackInfo.TYPE_MELEE)
+		_perform_attack(AttackInfo.TYPE_MELEE, main_attack_profile)
 	if Input.is_action_just_pressed("attack_off_hand"):
-		_perform_attack(AttackInfo.TYPE_LIGHTNING)
+		_perform_attack(AttackInfo.TYPE_LIGHTNING, offhand_attack_profile)
 
-func _perform_attack(attack_type: StringName) -> void:
+func _perform_attack(attack_type: StringName, profile: AttackInfo) -> void:
 	if not camera:
 		return
 
@@ -227,20 +230,57 @@ func _perform_attack(attack_type: StringName) -> void:
 	if not target_stats:
 		return
 
-	var attack := _build_attack_info(attack_type, origin, direction)
-	if attack:
-		target_stats.apply_attack(attack)
+	var attack := _build_attack_info(attack_type, origin, direction, profile)
+	if not attack:
+		return
+	if not _can_pay_attack_cost(attack):
+		return
+	target_stats.apply_attack(attack)
 
 func _build_attack_info(
 	attack_type: StringName,
 	origin: Vector3,
-	direction: Vector3
+	direction: Vector3,
+	profile: AttackInfo
 ) -> AttackInfo:
+	var attack := _attack_from_profile(profile, attack_type, origin, direction)
+	if attack:
+		return attack
+
 	match attack_type:
 		AttackInfo.TYPE_LIGHTNING:
-			return AttackInfo.lightning(ATTACK_DAMAGE, self, origin, direction)
+			return AttackInfo.lightning(ATTACK_DAMAGE, self, origin, direction, LIGHTNING_MAGICKA_COST)
 		_:
 			return AttackInfo.melee(ATTACK_DAMAGE, self, origin, direction)
+
+func _attack_from_profile(
+	profile: AttackInfo,
+	attack_type: StringName,
+	origin: Vector3,
+	direction: Vector3
+) -> AttackInfo:
+	if not profile:
+		return null
+	var attack := profile.duplicate() as AttackInfo
+	if not attack:
+		return null
+	attack.instigator = self
+	attack.origin = origin
+	attack.direction = direction
+	if attack.damage <= 0.0:
+		attack.damage = ATTACK_DAMAGE
+	if attack.attack_type == StringName():
+		attack.attack_type = attack_type
+	if attack.attack_type == AttackInfo.TYPE_LIGHTNING and attack.magicka_cost <= 0.0:
+		attack.magicka_cost = LIGHTNING_MAGICKA_COST
+	return attack
+
+func _can_pay_attack_cost(attack: AttackInfo) -> bool:
+	if attack.magicka_cost <= 0.0:
+		return true
+	if not stats:
+		return false
+	return stats.spend_magicka(attack.magicka_cost)
 
 func _find_actor_stats(root: Object) -> ActorStats:
 	if not root:

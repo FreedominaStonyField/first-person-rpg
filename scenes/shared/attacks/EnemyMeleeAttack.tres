@@ -1,0 +1,6 @@
+[gd_resource type="AttackInfo" format=3]
+
+[resource]
+damage = 15.0
+attack_type = &"melee"
+magicka_cost = 0.0

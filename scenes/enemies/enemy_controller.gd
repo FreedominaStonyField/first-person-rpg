@@ -5,6 +5,7 @@ const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
 
 @export var attack_damage := 15.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
+@export var attack_profile: AttackInfo
 @export var attack_cooldown := 1.2
 @export var attack_area_path: NodePath
 @export var attack_ray_path: NodePath
@@ -188,11 +189,30 @@ func _build_attack_info() -> AttackInfo:
 		if direction == Vector3.ZERO:
 			direction = -_attack_ray.global_transform.basis.z
 
+	var attack := _build_attack_from_profile(origin, direction)
+	if attack:
+		return attack
+
 	match attack_type:
 		AttackInfo.TYPE_LIGHTNING:
 			return AttackInfo.lightning(attack_damage, self, origin, direction)
 		_:
 			return AttackInfo.melee(attack_damage, self, origin, direction)
+
+func _build_attack_from_profile(origin: Vector3, direction: Vector3) -> AttackInfo:
+	if not attack_profile:
+		return null
+	var attack := attack_profile.duplicate() as AttackInfo
+	if not attack:
+		return null
+	attack.instigator = self
+	attack.origin = origin
+	attack.direction = direction
+	if attack.damage <= 0.0:
+		attack.damage = attack_damage
+	if attack.attack_type == StringName():
+		attack.attack_type = attack_type
+	return attack
 
 func _first_tracked_target_stats() -> ActorStats:
 	var stale_bodies := []
