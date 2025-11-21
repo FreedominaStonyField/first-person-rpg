@@ -213,7 +213,8 @@ func _perform_attack(attack_type: StringName, profile: AttackInfo) -> void:
 	var center := viewport.get_visible_rect().size * 0.5
 	var origin := camera.project_ray_origin(center)
 	var direction := camera.project_ray_normal(center)
-	var target := origin + direction * ATTACK_RANGE
+	var attack_range := _attack_range_for_profile(attack_type, profile)
+	var target := origin + direction * attack_range
 
 	var space := get_world_3d().direct_space_state
 	var params := PhysicsRayQueryParameters3D.create(origin, target)
@@ -247,11 +248,12 @@ func _build_attack_info(
 	if attack:
 		return attack
 
+	var attack_meta := {"range": _attack_range_for_profile(attack_type, profile), "delivery_type": AttackInfo.DELIVERY_RAYCAST}
 	match attack_type:
 		AttackInfo.TYPE_LIGHTNING:
-			return AttackInfo.lightning(ATTACK_DAMAGE, self, origin, direction, LIGHTNING_MAGICKA_COST)
+			return AttackInfo.lightning(ATTACK_DAMAGE, self, origin, direction, LIGHTNING_MAGICKA_COST, attack_meta)
 		_:
-			return AttackInfo.melee(ATTACK_DAMAGE, self, origin, direction)
+			return AttackInfo.melee(ATTACK_DAMAGE, self, origin, direction, 0.0, attack_meta)
 
 func _attack_from_profile(
 	profile: AttackInfo,
@@ -273,7 +275,20 @@ func _attack_from_profile(
 		attack.attack_type = attack_type
 	if attack.attack_type == AttackInfo.TYPE_LIGHTNING and attack.magicka_cost <= 0.0:
 		attack.magicka_cost = LIGHTNING_MAGICKA_COST
+	if attack.delivery_type == StringName():
+		attack.delivery_type = AttackInfo.DELIVERY_RAYCAST
+	if attack.range <= 0.0:
+		attack.range = ATTACK_RANGE
+	if attack.damage_type == StringName():
+		attack.damage_type = AttackInfo.default_damage_type(attack.attack_type)
 	return attack
+
+func _attack_range_for_profile(attack_type: StringName, profile: AttackInfo) -> float:
+	if profile and profile.range > 0.0:
+		return profile.range
+	if attack_type == AttackInfo.TYPE_LIGHTNING:
+		return ATTACK_RANGE
+	return ATTACK_RANGE
 
 func _can_pay_attack_cost(attack: AttackInfo) -> bool:
 	if attack.magicka_cost <= 0.0:

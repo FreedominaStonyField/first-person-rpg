@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://br7t2su706582"]
+[gd_scene load_steps=16 format=3 uid="uid://br7t2su706582"]
 
 [ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
 [ext_resource type="Script" uid="uid://dptpyua3c2j1a" path="res://scenes/enemies/enemy_health_label.gd" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://x0g2hu3xpju3" path="res://scenes/enemies/ai/states/combat_attack_state.gd" id="8_hau8f"]
 [ext_resource type="Script" uid="uid://6in3o1smlv5" path="res://scenes/enemies/ai/states/combat_chase_state.gd" id="9_xopsu"]
 [ext_resource type="Script" uid="uid://qcf7c6gt57fd" path="res://scenes/enemies/ai/states/combat_flee_state.gd" id="10_fwdrj"]
+[ext_resource type="Resource" path="res://scenes/shared/attacks/EnemyBashAttack.tres" id="11_bash"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
 
@@ -25,6 +26,7 @@ radius = 1.6
 script = ExtResource("4_cye0q")
 attack_area_path = NodePath("EnemyCharacter#AttackRangeArea")
 attack_ray_path = NodePath("EnemyCharacter#SwipeRay")
+attack_profile = ExtResource("11_bash")
 
 [node name="EnemyCharacter#NavigationAgent" type="NavigationAgent3D" parent="."]
 

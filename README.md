@@ -19,18 +19,23 @@ Project layout follows Godot best practices so assets, scenes, and scripts stay 
 - `translations/` for `.translation` files and localization assets.
 - `themes/` for centralized `*.tres` theme resources that can be reused across UI scenes.
 
-## Current Progress
-- Player movement has a working prototype that captures mouse look, gravity-aware locomotion, jumping, sprinting, and stamina gating via `scenes/shared/player_controller.gd`. The controller also manages physics pickups/pushes, a debug overlay, and clean cleanup on death so the first-person feel is solid for traversal testing.
-- Core actor stats now live in `scenes/shared/ActorStats.gd`, which centralizes health, stamina, magicka, level/xp tracking, regeneration toggles, and damage/consumption helpers used by gameplay systems.
-- A hurtbox area demonstrates interactable damage delivery through `scenes/levels/hurtbox_area.gd`; it discovers nearby `ActorStats` nodes, applies damage, and can be toggled with debug hooks for tracing to confirm signal driven gameplay reactions.
-- `scenes/levels/movement_test_level.tscn` hosts the player controller, a placeholder enemy, hurtbox, and interactable rigid body crates so playtests can validate traversal, pickup, and combat tech before expanding the world.
+## Gameplay Overview
+- **Player loop**: First-person controller handles mouse-look, jump, sprint (drains stamina), interact-to-pickup rigid bodies, and pushes bodies on collision. Main/off-hand attacks fire from camera center using `AttackInfo` profiles; lightning costs magicka, melee is free.
+- **Stats**: `ActorStats` (and `PlayerStats` wrapper) track health, stamina, magicka, XP/level, and optional regeneration. Signals (`core_stat_changed`, `damaged`, `died`) keep UI and behaviors in sync.
+- **UI**: `PlayerHud` reads `ActorStats` to show health/stamina/magicka bars and a damage flash overlay. Debug info lives on the controller.
+- **Enemies**: `EnemyController` uses a two-layer state machine (behavior + combat) to pick between Idle/Chase/Attack/Flee, backed by `NavigationAgent3D` pathing plus ray/area targeting for attacks.
+- **Death handling**: `DeathHandlerComponent` spawns a physics ragdoll and disables the actor when its stats emit `died`. Player death is handled by `GameOverHandler`, which fades in an overlay, disables input, and reloads the scene after a delay.
+- **Testbed level**: `scenes/levels/movement_test_level.tscn` assembles the player, a dummy enemy, hurtbox area, and physics props for quick traversal and combat iteration.
 
-## Implemented Systems
-- **Controller / Input**: Mouse capture, aim clamping, move vectors, and jump actions all flow through `PlayerController`, which also adjusts sprint speed based on `ActorStats` stamina, enforces carry penalties on held rigid bodies, and pushes nearby physics bodies to avoid clipping issues.
-- **Stats / Lifecycle**: `ActorStats` exposes health, stamina, magicka, xp/level math, and regeneration routines; it broadcasts a `died` signal, so other scenes can react to death without coupling to implementation details.
-- **Combat Prototyping**: Hurtboxes reuse the `ActorStats` hierarchy to damage actors and support fast iteration for enemy encounters. The movement level assembles these pieces for rapid feedback before productionizing layouts.
+## System Status
+- **Movement/Interaction**: Prototype complete for gravity-aware locomotion, sprinting with stamina drain, jumping, and physics pickup/hold/drop with carry speed penalties. Collision pushing reduces clipping. Ready for tuning and animation integration.
+- **Combat/Attacks**: Placeholder melee and lightning attacks work via camera raycasts. `AttackInfo` resource encapsulates damage, origin/direction, instigator, and magicka cost so enemies and players share the same structure. Needs VFX/SFX and hit reactions.
+- **Stats/Progression**: Health, stamina, magicka fully functional with regen toggle and spend helpers. XP accrues and levels up with a simple linear curve but no stat scaling yet. Signals power UI updates and death flow.
+- **UI/HUD**: Health/Stamina/Magicka bars and damage flash are wired to `ActorStats`. No inventory, quest, or compass yet.
+- **Enemy AI**: Behavior/combat machines switch between chase, attack, and flee based on distance and health threshold (25% default). Enemies pathfind with `NavigationAgent3D`, attack via area overlap or ray, and respect cooldowns. Death stops AI and attacks.
+- **Death/Game Over**: Non-player actors ragdoll on death; player death disables controls, shows a fade-in overlay, and reloads the active scene after a randomized delay. No checkpoint or save/load integration yet.
+- **Content/Levels**: Only the movement test level exists; no world streaming, dungeons, or quests. Enemy setup lives in `scenes/enemies/Enemy.tscn` (dummy variant present).
 
-
-## Tips
+## Onboarding Tips
 - Keep each scene or script inside its descriptive folder to make refactoring and teamwork easier.
 - Use Godot's import settings to place generated resources back into the same folders where their sources live.

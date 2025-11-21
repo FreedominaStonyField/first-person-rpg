@@ -81,7 +81,7 @@ func attempt_attack() -> void:
 		return
 
 	target_stats.apply_attack(attack)
-	_cooldown_remaining = attack_cooldown
+	_cooldown_remaining = _resolve_attack_cooldown(attack)
 	
 func _resolve_attack_area() -> Area3D:
 	if not attack_area_path or attack_area_path == NodePath(""):
@@ -165,7 +165,7 @@ func _is_player_in_attack_range() -> bool:
 	if not player:
 		return false
 	var distance := global_transform.origin.distance_to(player.global_transform.origin)
-	return distance <= (stopping_distance + attack_range_margin)
+	return distance <= _attack_range()
 
 func _should_flee() -> bool:
 	if not _self_stats:
@@ -189,15 +189,17 @@ func _build_attack_info() -> AttackInfo:
 		if direction == Vector3.ZERO:
 			direction = -_attack_ray.global_transform.basis.z
 
+	var attack_range := _attack_range()
 	var attack := _build_attack_from_profile(origin, direction)
 	if attack:
 		return attack
 
+	var attack_meta := {"range": attack_range, "cooldown": attack_cooldown}
 	match attack_type:
 		AttackInfo.TYPE_LIGHTNING:
-			return AttackInfo.lightning(attack_damage, self, origin, direction)
+			return AttackInfo.lightning(attack_damage, self, origin, direction, 0.0, attack_meta)
 		_:
-			return AttackInfo.melee(attack_damage, self, origin, direction)
+			return AttackInfo.melee(attack_damage, self, origin, direction, 0.0, attack_meta)
 
 func _build_attack_from_profile(origin: Vector3, direction: Vector3) -> AttackInfo:
 	if not attack_profile:
@@ -212,6 +214,14 @@ func _build_attack_from_profile(origin: Vector3, direction: Vector3) -> AttackIn
 		attack.damage = attack_damage
 	if attack.attack_type == StringName():
 		attack.attack_type = attack_type
+	if attack.delivery_type == StringName():
+		attack.delivery_type = AttackInfo.default_delivery_type(attack.attack_type)
+	if attack.damage_type == StringName():
+		attack.damage_type = AttackInfo.default_damage_type(attack.attack_type)
+	if attack.range <= 0.0:
+		attack.range = _attack_range()
+	if attack.cooldown <= 0.0:
+		attack.cooldown = attack_cooldown
 	return attack
 
 func _first_tracked_target_stats() -> ActorStats:
@@ -293,3 +303,13 @@ func _find_actor_stats(root: Object) -> ActorStats:
 				if candidate:
 					return candidate
 	return null
+
+func _attack_range() -> float:
+	if attack_profile and attack_profile.range > 0.0:
+		return attack_profile.range
+	return stopping_distance + attack_range_margin
+
+func _resolve_attack_cooldown(attack: AttackInfo) -> float:
+	if attack and attack.cooldown > 0.0:
+		return attack.cooldown
+	return attack_cooldown
