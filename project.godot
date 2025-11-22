@@ -15,6 +15,10 @@ run/main_scene="uid://byhmi4owupg24"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/fancy_editor_sounds/plugin.cfg")
+
 [input]
 
 move_forward={
