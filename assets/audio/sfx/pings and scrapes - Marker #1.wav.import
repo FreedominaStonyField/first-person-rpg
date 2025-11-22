@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://f5716fbab5904873af689eb958fe2ab2"
+path="res://.godot/imported/pings and scrapes - Marker #1.wav-629b48c141890fcdd30c414515b64102.sample"
+
+[deps]
+
+source_file="res://assets/audio/sfx/pings and scrapes - Marker #1.wav"
+dest_files=["res://.godot/imported/pings and scrapes - Marker #1.wav-629b48c141890fcdd30c414515b64102.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
