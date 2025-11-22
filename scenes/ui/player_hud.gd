@@ -14,11 +14,13 @@ var _damage_flash_tween: Tween = null
 @onready var _stamina_bar: ProgressBar = $HudMarginContainer/VitalsBox/StaminaBar
 @onready var _magicka_bar: ProgressBar = $HudMarginContainer/VitalsBox/MagickaBar
 @onready var _damage_flash: ColorRect = $DamageFlashOverlay
+@onready var _main_attack_status: Label = $MainAttackStatusLabel
 
 func _ready() -> void:
 	_apply_bar_styles()
 	_resolve_stats_from_path()
 	_sync_all_bars()
+	set_main_attack_status("Attack [Main]: Idle")
 	if stats:
 		_connect_stats()
 
@@ -56,6 +58,11 @@ func _disconnect_stats() -> void:
 		stats.disconnect("core_stat_changed", Callable(self, "_on_core_stat_changed"))
 	if stats.is_connected("damaged", Callable(self, "_on_damaged")):
 		stats.disconnect("damaged", Callable(self, "_on_damaged"))
+
+func set_main_attack_status(status: String) -> void:
+	if not _main_attack_status:
+		return
+	_main_attack_status.text = status
 
 func _on_core_stat_changed(stat_name: String, previous_value: float, current_value: float, max_value: float) -> void:
 	match stat_name:

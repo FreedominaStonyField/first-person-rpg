@@ -15,6 +15,17 @@ color = Color(0.6, 0, 0, 0)
 mouse_filter = 2
 visible = false
 
+[node name="MainAttackStatusLabel" type="Label" parent="."]
+anchor_left = 0.6
+anchor_top = 0.02
+anchor_right = 0.98
+anchor_bottom = 0.1
+offset_left = 0.0
+offset_top = 6.0
+offset_bottom = 6.0
+mouse_filter = 2
+text = "Attack [Main]: Idle"
+
 [node name="HudMarginContainer" type="MarginContainer" parent="."]
 anchor_left = 0.02
 anchor_top = 1.0

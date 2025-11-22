@@ -80,6 +80,7 @@ func _ready() -> void:
 			push_error("PlayerController: stats_path is not pointing to a valid node.")
 	if player_hud and stats:
 		player_hud.set_stats(stats)
+	_set_attack_status_message(AttackState.IDLE)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and camera:
@@ -247,9 +248,13 @@ func _try_start_attack(slot: StringName, config: Dictionary) -> void:
 	attack_timer = config.get("windup_time", 0.0)
 	_current_attack_config = config
 	_current_attack_slot = slot
+	_set_attack_status_message(attack_state)
 
 func _update_attack_state(delta: float) -> void:
 	if attack_state == AttackState.IDLE:
+		return
+	if _current_attack_config.is_empty():
+		_reset_attack_state()
 		return
 	attack_timer = max(0.0, attack_timer - delta)
 	if attack_timer > 0.0:
@@ -260,14 +265,13 @@ func _update_attack_state(delta: float) -> void:
 			attack_state = AttackState.ACTIVE
 			attack_timer = _current_attack_config.get("active_time", 0.0)
 			_execute_active_hit(_current_attack_config)
+			_set_attack_status_message(attack_state)
 		AttackState.ACTIVE:
 			attack_state = AttackState.RECOVERY
 			attack_timer = _current_attack_config.get("recovery_time", 0.0)
+			_set_attack_status_message(attack_state)
 		AttackState.RECOVERY:
-			attack_state = AttackState.IDLE
-			attack_timer = 0.0
-			_current_attack_config = {}
-			_current_attack_slot = ""
+			_reset_attack_state()
 
 func _execute_active_hit(config: Dictionary) -> void:
 	if not camera:
@@ -331,6 +335,37 @@ func _cast_attack_ray(range: float) -> Dictionary:
 		"direction": direction,
 		"hit_position": target,
 	}
+
+func _reset_attack_state() -> void:
+	attack_state = AttackState.IDLE
+	attack_timer = 0.0
+	_current_attack_config = {}
+	_current_attack_slot = ""
+	_set_attack_status_message(attack_state)
+
+func _set_attack_status_message(state: int) -> void:
+	if not player_hud or not player_hud.has_method("set_main_attack_status"):
+		return
+	var slot_label: String = "Main"
+	if _current_attack_slot != "":
+		slot_label = str(_current_attack_slot)
+	var state_text := ""
+	match state:
+		AttackState.WINDUP:
+			state_text = "Windup"
+		AttackState.ACTIVE:
+			state_text = "Active"
+		AttackState.RECOVERY:
+			state_text = "Recovery"
+		_:
+			state_text = "Idle"
+	var attack_label := ""
+	if not _current_attack_config.is_empty():
+		attack_label = str(_current_attack_config.get("attack_type", "Attack")).capitalize()
+	var message := "Attack [%s]: %s" % [slot_label.capitalize(), state_text]
+	if attack_label != "":
+		message += " (%s)" % attack_label
+	player_hud.set_main_attack_status(message)
 
 func _build_attack_info_from_config(config: Dictionary, origin: Vector3, direction: Vector3) -> AttackInfo:
 	var attack_type: StringName = config.get("attack_type", AttackInfo.TYPE_MELEE)

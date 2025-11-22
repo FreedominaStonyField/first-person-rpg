@@ -86,6 +86,10 @@ size = Vector3(42.571045, 1, 5)
 transform = Transform3D(-2.7806063e-08, -0.2588193, 0.96592706, -7.450612e-09, 0.96592706, 0.2588193, -1.0000002, -2.9802322e-08, -4.371139e-08, -30.531982, -2.4939685, 3.145598e-07)
 size = Vector3(42.571045, 1, 19.392578)
 
+[node name="Ramp" type="CSGBox3D" parent="GroundNavigationRegion"]
+transform = Transform3D(0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 0, 0, 1, -20.162457, 5.432641, 0)
+size = Vector3(42.571045, 1, 5)
+
 [node name="PlayerController" parent="." instance=ExtResource("1_dr3jf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6656884, 0)
 max_carry_speed_penalty = 1.0
