@@ -44,6 +44,9 @@ func _on_actor_died(actor: Node) -> void:
 	if _is_dead or actor != _actor_root:
 		return
 	_is_dead = true
+	call_deferred("_process_death")
+
+func _process_death() -> void:
 	_spawn_ragdoll()
 	_disable_actor()
 
