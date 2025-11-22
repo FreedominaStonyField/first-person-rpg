@@ -60,6 +60,9 @@ var is_sprinting := false
 @onready var camera: Camera3D = $Camera3D
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var player_hud: PlayerHud = $CanvasLayer/PlayerHud
+@onready var attack_charge_sfx: AudioStreamPlayer3D = $AttackChargeSfxAudio
+@onready var attack_fire_sfx: AudioStreamPlayer3D = $AttackFireSfxAudio
+@onready var attack_fail_sfx: AudioStreamPlayer3D = $AttackFailSfxAudio
 
 var pitch := 0.0
 var held_body: RigidBody3D = null
@@ -244,14 +247,17 @@ func _physics_process(delta: float) -> void:
 func _try_start_attack(slot: StringName, config: Dictionary) -> void:
 	if attack_state != AttackState.IDLE:
 		_show_attack_fail_popup("Recovering")
+		_play_attack_fail_sfx()
 		return
 	if not _spend_attack_cost(config):
 		_show_attack_fail_popup("Not enough Magicka")
+		_play_attack_fail_sfx()
 		return
 	attack_state = AttackState.WINDUP
 	attack_timer = config.get("windup_time", 0.0)
 	_current_attack_config = config
 	_current_attack_slot = slot
+	_play_attack_charge_sfx()
 	_set_attack_status_message(attack_state)
 
 func _update_attack_state(delta: float) -> void:
@@ -268,6 +274,7 @@ func _update_attack_state(delta: float) -> void:
 		AttackState.WINDUP:
 			attack_state = AttackState.ACTIVE
 			attack_timer = _current_attack_config.get("active_time", 0.0)
+			_play_attack_fire_sfx()
 			_execute_active_hit(_current_attack_config)
 			_set_attack_status_message(attack_state)
 		AttackState.ACTIVE:
@@ -407,6 +414,21 @@ func _debug_draw_attack_ray(origin: Vector3, hit_position: Vector3, has_hit: boo
 		if is_instance_valid(instance):
 			instance.queue_free()
 	)
+
+func _play_attack_charge_sfx() -> void:
+	_play_sfx(attack_charge_sfx)
+
+func _play_attack_fire_sfx() -> void:
+	_play_sfx(attack_fire_sfx)
+
+func _play_attack_fail_sfx() -> void:
+	_play_sfx(attack_fail_sfx)
+
+func _play_sfx(player: AudioStreamPlayer3D) -> void:
+	if not player:
+		return
+	player.stop()
+	player.play()
 
 func _show_attack_fail_popup(message: String) -> void:
 	if not player_hud or not player_hud.has_method("spawn_popup_text"):
