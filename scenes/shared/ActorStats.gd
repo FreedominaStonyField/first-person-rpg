@@ -5,6 +5,8 @@ signal core_stat_changed(stat_name: String, previous_value: float, current_value
 signal damaged(amount: float, current_health: float, max_health: float)
 signal died(actor: Node)
 
+const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
+
 const MAX_STAT := 100.0
 const HEALTH_REGEN_RATE := 1.5
 const STAMINA_REGEN_RATE := 8.0
@@ -49,7 +51,7 @@ func spend_stamina(amount: float) -> bool:
 	if amount <= 0.0:
 		return false
 	if stamina < amount:
-		print("ActorStats: Not enough stamina (%f/%f)" % [stamina, amount])
+		# print("ActorStats: Not enough stamina (%f/%f)" % [stamina, amount])
 		return false
 	_modify_core_stat("stamina", -abs(amount), 0.0, MAX_STAT)
 	return true
@@ -58,7 +60,7 @@ func spend_magicka(amount: float) -> bool:
 	if amount <= 0.0:
 		return false
 	if magicka < amount:
-		print("ActorStats: Not enough magicka (%f/%f)" % [magicka, amount])
+		# print("ActorStats: Not enough magicka (%f/%f)" % [magicka, amount])
 		return false
 	_modify_core_stat("magicka", -abs(amount), 0.0, MAX_STAT)
 	return true
@@ -74,7 +76,7 @@ func gain_xp(amount: float) -> void:
 		xp -= xp_needed
 		_log_stat_change("xp", xp + xp_needed, xp)
 		level += 1
-		print("ActorStats: Level up! Level %d" % level)
+		# print("ActorStats: Level up! Level %d" % level)
 		xp_needed = xp_to_next_level()
 
 func xp_to_next_level() -> float:
@@ -116,12 +118,14 @@ func _has_core_stat(stat_name: String) -> bool:
 	return stat_name in ["health", "stamina", "magicka"]
 
 func _log_stat_change(stat_name: String, old_value: float, new_value: float) -> void:
-	print("ActorStats: %s %.2f -> %.2f" % [stat_name.capitalize(), old_value, new_value])
+	# print("ActorStats: %s %.2f -> %.2f" % [stat_name.capitalize(), old_value, new_value])
+	return
 
 func _log_all_stats(context: String) -> void:
-	print("ActorStats (%s): Health %.0f / Stamina %.0f / Magicka %.0f / Level %d / XP %.0f" % [
-		context, health, stamina, magicka, level, xp
-	])
+	# print("ActorStats (%s): Health %.0f / Stamina %.0f / Magicka %.0f / Level %d / XP %.0f" % [
+	#	context, health, stamina, magicka, level, xp
+	# ])
+	return
 
 func _apply_attack_damage(attack: AttackInfo) -> void:
 	var damage_amount := attack.damage
@@ -137,5 +141,5 @@ func _apply_attack_damage(attack: AttackInfo) -> void:
 		health = 0.0
 		if _is_alive:
 			_is_alive = false
-			print("ActorStats: Health depleted; triggering death handling.")
+			# print("ActorStats: Health depleted; triggering death handling.")
 			emit_signal("died", get_parent())

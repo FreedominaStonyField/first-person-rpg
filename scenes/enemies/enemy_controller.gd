@@ -46,7 +46,7 @@ func _ready() -> void:
 		behavior_state_machine.enter_combat()
 	if player:
 		_last_player_position = player.global_transform.origin
-		print("EnemyController: found player at ", _last_player_position)
+		# print("EnemyController: found player at ", _last_player_position)
 
 func _process(_delta: float) -> void:
 	if behavior_state_machine:
@@ -135,7 +135,7 @@ func _track_player_position() -> void:
 	var player_position := player.global_transform.origin
 	if player_position != _last_player_position:
 		_last_player_position = player_position
-		print("EnemyController: player moved to ", player_position)
+		# print("EnemyController: player moved to ", player_position)
 
 func _can_attack() -> bool:
 	if _self_stats and _self_stats.health <= 0.0:

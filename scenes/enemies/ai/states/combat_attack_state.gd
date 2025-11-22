@@ -1,11 +1,12 @@
 extends EnemyState
 class_name EnemyCombatAttackState
 
-func enter(_controller: EnemyController) -> void:
-	print("EnemyCombatAttackState: enter")
+#func enter(_controller: EnemyController) -> void:
+	# print("EnemyCombatAttackState: enter")
+	
 
-func exit(_controller: EnemyController) -> void:
-	print("EnemyCombatAttackState: exit")
+#func exit(_controller: EnemyController) -> void:
+	# print("EnemyCombatAttackState: exit")
 
 func physics_step(controller: EnemyController, delta: float) -> void:
 	if not controller:

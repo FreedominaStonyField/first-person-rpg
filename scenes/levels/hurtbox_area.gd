@@ -12,37 +12,42 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	if debug_print and _tracked_bodies.size():
-		print_debug(
-			"Hurtbox: tracking %d actor(s): %s" %
-				[_tracked_bodies.size(), _tracked_bodies.keys()])
+		# print_debug(
+		# 	"Hurtbox: tracking %d actor(s): %s" %
+		# 		[_tracked_bodies.size(), _tracked_bodies.keys()])
+		return
 
 func _on_body_entered(body: Node) -> void:
 	if debug_print:
-		print_debug("Hurtbox: body_entered -> %s" % [body])
+		return
+		# print_debug("Hurtbox: body_entered -> %s" % [body])
 
 	if _tracked_bodies.has(body):
 		if debug_print:
-			print_debug("Hurtbox: %s already tracked, ignoring duplicate entry" % [body])
-		return
+			# print_debug("Hurtbox: %s already tracked, ignoring duplicate entry" % [body])
+			return
 
 	var stats := _find_actor_stats(body)
 	if stats:
 		_tracked_bodies[body] = stats
 
 	if debug_print:
-		print_debug("Hurtbox: stats resolved -> %s" % [stats])
+		return
+		# print_debug("Hurtbox: stats resolved -> %s" % [stats])
 
 	if stats:
 		stats.apply_attack(_build_attack_info())
 		if debug_print:
-			print_debug("Hurtbox: applied %f damage to %s (remaining HP %f)" %
-				[damage_amount, stats, stats.health])
+			return
+			# print_debug("Hurtbox: applied %f damage to %s (remaining HP %f)" %
+			# 	[damage_amount, stats, stats.health])
 
 func _on_body_exited(body: Node) -> void:
 	if _tracked_bodies.has(body):
 		_tracked_bodies.erase(body)
-		if debug_print:
-			print_debug("Hurtbox: body_exited -> %s" % [body])
+		#if debug_print:
+			
+			# print_debug("Hurtbox: body_exited -> %s" % [body])
 
 func _find_actor_stats(node: Node) -> ActorStats:
 	if not node:
