@@ -1,14 +1,14 @@
 [remap]
 
-importer="ogg_vorbis"
+importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
-uid="uid://e2336010fe0d47b2b0fe1d4ac4401425"
-path="res://.godot/imported/ignition.ogg-ef3d99f1cb4ed04ca31fb9c262536aa7.oggstr"
+uid="uid://ch04ik23hrwgm"
+path="res://.godot/imported/ignition.ogg-7d4cdea1b0cbcf55778c0424547dc226.oggvorbisstr"
 
 [deps]
 
 source_file="res://assets/audio/sfx/ignition.ogg"
-dest_files=["res://.godot/imported/ignition.ogg-ef3d99f1cb4ed04ca31fb9c262536aa7.oggstr"]
+dest_files=["res://.godot/imported/ignition.ogg-7d4cdea1b0cbcf55778c0424547dc226.oggvorbisstr"]
 
 [params]
 

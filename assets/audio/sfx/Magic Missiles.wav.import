@@ -3,12 +3,12 @@
 importer="wav"
 type="AudioStreamWAV"
 uid="uid://t1i7sitccsgo"
-path="res://.godot/imported/Magic Missiles.wav-45d3581ab80cb162e24e61546a466983.sample"
+path="res://.godot/imported/Magic Missiles.wav-7e30904bec953de0820301dcc95b4ab8.sample"
 
 [deps]
 
 source_file="res://assets/audio/sfx/Magic Missiles.wav"
-dest_files=["res://.godot/imported/Magic Missiles.wav-45d3581ab80cb162e24e61546a466983.sample"]
+dest_files=["res://.godot/imported/Magic Missiles.wav-7e30904bec953de0820301dcc95b4ab8.sample"]
 
 [params]
 

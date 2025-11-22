@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://22603bd58517400794687adcce97f143"
-path="res://.godot/imported/spell_fail_ping.wav-fb813b371824c3655a9d3ebe70174529.sample"
+uid="uid://k7tnv66lm6xm"
+path="res://.godot/imported/spell_fail_ping.wav-344ed23d1aa01ee9701d34cf94b0bcb4.sample"
 
 [deps]
 
 source_file="res://assets/audio/sfx/spell_fail_ping.wav"
-dest_files=["res://.godot/imported/spell_fail_ping.wav-fb813b371824c3655a9d3ebe70174529.sample"]
+dest_files=["res://.godot/imported/spell_fail_ping.wav-344ed23d1aa01ee9701d34cf94b0bcb4.sample"]
 
 [params]
 

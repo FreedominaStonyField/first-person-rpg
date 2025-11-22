@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://f5716fbab5904873af689eb958fe2ab2"
-path="res://.godot/imported/pings and scrapes - Marker #1.wav-629b48c141890fcdd30c414515b64102.sample"
+uid="uid://dpc5s2vggr630"
+path="res://.godot/imported/pings and scrapes - Marker #1.wav-57744f24dd1a02c2f666f9fff4f9d56a.sample"
 
 [deps]
 
 source_file="res://assets/audio/sfx/pings and scrapes - Marker #1.wav"
-dest_files=["res://.godot/imported/pings and scrapes - Marker #1.wav-629b48c141890fcdd30c414515b64102.sample"]
+dest_files=["res://.godot/imported/pings and scrapes - Marker #1.wav-57744f24dd1a02c2f666f9fff4f9d56a.sample"]
 
 [params]
 
