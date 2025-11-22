@@ -1,8 +1,6 @@
 extends CharacterBody3D
 class_name EnemyController
 
-const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
-
 @export var attack_damage := 15.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_profile: AttackInfo
@@ -218,8 +216,8 @@ func _build_attack_from_profile(origin: Vector3, direction: Vector3) -> AttackIn
 		attack.delivery_type = AttackInfo.default_delivery_type(attack.attack_type)
 	if attack.damage_type == StringName():
 		attack.damage_type = AttackInfo.default_damage_type(attack.attack_type)
-	if attack.range <= 0.0:
-		attack.range = _attack_range()
+	if attack.attack_range <= 0.0:
+		attack.attack_range = _attack_range()
 	if attack.cooldown <= 0.0:
 		attack.cooldown = attack_cooldown
 	return attack
@@ -305,8 +303,8 @@ func _find_actor_stats(root: Object) -> ActorStats:
 	return null
 
 func _attack_range() -> float:
-	if attack_profile and attack_profile.range > 0.0:
-		return attack_profile.range
+	if attack_profile and attack_profile.attack_range > 0.0:
+		return attack_profile.attack_range
 	return stopping_distance + attack_range_margin
 
 func _resolve_attack_cooldown(attack: AttackInfo) -> float:

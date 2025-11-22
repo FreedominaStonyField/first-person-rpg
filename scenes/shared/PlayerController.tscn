@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="3"]
 [ext_resource type="Script" uid="uid://cnrcn6yeejvjq" path="res://scenes/shared/DeathHandlerComponent.gd" id="4_jl5kh"]
 [ext_resource type="PackedScene" path="res://scenes/ui/PlayerHud.tscn" id="5_qcruy"]
-[ext_resource type="AttackInfo" path="res://scenes/shared/attacks/PlayerLightningBoltAttack.tres" id="6_lightbolt"]
+[ext_resource type="Resource" path="res://scenes/shared/attacks/PlayerLightningBoltAttack.tres" id="6_lightbolt"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wae83"]
 

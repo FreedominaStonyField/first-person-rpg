@@ -18,7 +18,7 @@ const TYPE_LIGHTNING := &"lightning"
 @export var damage_type: StringName = DAMAGE_PHYSICAL
 @export var delivery_type: StringName = DELIVERY_MELEE
 @export var attack_type: StringName = TYPE_MELEE
-@export var range := 0.0
+@export var attack_range := 0.0
 @export var area_radius := 0.0
 @export var cooldown := 0.0
 @export var hit_window: Vector2 = Vector2.ZERO # Seconds where the hitbox is active (start, end).
@@ -80,7 +80,7 @@ static func _build_attack(
 	attack.attack_type = attack_kind
 	attack.damage_type = extra.get("damage_type", _default_damage_type(attack_kind))
 	attack.delivery_type = extra.get("delivery_type", _default_delivery_type(attack_kind))
-	attack.range = extra.get("range", attack.range)
+	attack.attack_range = extra.get("range", attack.attack_range)
 	attack.area_radius = extra.get("area_radius", attack.area_radius)
 	attack.cooldown = extra.get("cooldown", attack.cooldown)
 	attack.hit_window = extra.get("hit_window", attack.hit_window)

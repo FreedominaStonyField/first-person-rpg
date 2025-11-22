@@ -5,7 +5,37 @@ const JUMP_VELOCITY = 4.5
 const ATTACK_RANGE := 10.0
 const ATTACK_DAMAGE := 20.0
 const LIGHTNING_MAGICKA_COST := 20.0
-const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
+const AttackState := {
+	"IDLE": 0,
+	"WINDUP": 1,
+	"ACTIVE": 2,
+	"RECOVERY": 3,
+}
+
+const PUNCH_ATTACK := {
+	"attack_type": AttackInfo.TYPE_MELEE,
+	"damage": 10.0,
+	"damage_type": AttackInfo.DAMAGE_PHYSICAL,
+	"range": 1.8,
+	"magicka_cost": 0.0,
+	"windup_time": 0.15,
+	"active_time": 0.08,
+	"recovery_time": 0.25,
+}
+
+const LIGHTNING_ATTACK := {
+	"attack_type": AttackInfo.TYPE_LIGHTNING,
+	"damage": 20.0,
+	"damage_type": AttackInfo.DAMAGE_SHOCK,
+	"range": 4.0,
+	"magicka_cost": 20.0,
+	"windup_time": 0.2,
+	"active_time": 0.1,
+	"recovery_time": 0.3,
+}
+
+const ATTACK_VFX_DURATION := 0.12
+const ATTACK_VFX_WIDTH := 0.05
 
 @export var sprint_multiplier := 1.6
 @export var sprint_stamina_drain_per_second := 20.0
@@ -31,6 +61,10 @@ var is_sprinting := false
 
 var pitch := 0.0
 var held_body: RigidBody3D = null
+var attack_state: int = AttackState.IDLE
+var attack_timer := 0.0
+var _current_attack_config: Dictionary = {}
+var _current_attack_slot: StringName = ""
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -198,104 +232,59 @@ func _physics_process(delta: float) -> void:
 	_push_collided_bodies(direction)
 
 	if Input.is_action_just_pressed("attack_main"):
-		_perform_attack(AttackInfo.TYPE_MELEE, main_attack_profile)
+		_try_start_attack("main", PUNCH_ATTACK)
 	if Input.is_action_just_pressed("attack_off_hand"):
-		_perform_attack(AttackInfo.TYPE_LIGHTNING, offhand_attack_profile)
+		_try_start_attack("offhand", LIGHTNING_ATTACK)
 
-func _perform_attack(attack_type: StringName, profile: AttackInfo) -> void:
+	_update_attack_state(delta)
+
+func _try_start_attack(slot: StringName, config: Dictionary) -> void:
+	if attack_state != AttackState.IDLE:
+		return
+	if not _spend_attack_cost(config):
+		return
+	attack_state = AttackState.WINDUP
+	attack_timer = config.get("windup_time", 0.0)
+	_current_attack_config = config
+	_current_attack_slot = slot
+
+func _update_attack_state(delta: float) -> void:
+	if attack_state == AttackState.IDLE:
+		return
+	attack_timer = max(0.0, attack_timer - delta)
+	if attack_timer > 0.0:
+		return
+
+	match attack_state:
+		AttackState.WINDUP:
+			attack_state = AttackState.ACTIVE
+			attack_timer = _current_attack_config.get("active_time", 0.0)
+			_execute_active_hit(_current_attack_config)
+		AttackState.ACTIVE:
+			attack_state = AttackState.RECOVERY
+			attack_timer = _current_attack_config.get("recovery_time", 0.0)
+		AttackState.RECOVERY:
+			attack_state = AttackState.IDLE
+			attack_timer = 0.0
+			_current_attack_config = {}
+			_current_attack_slot = ""
+
+func _execute_active_hit(config: Dictionary) -> void:
 	if not camera:
 		return
 
-	var viewport := camera.get_viewport()
-	if not viewport:
+	var range :float= config.get("range", ATTACK_RANGE)
+	var ray_data := _cast_attack_ray(range)
+	if ray_data.is_empty():
 		return
-
-	var center := viewport.get_visible_rect().size * 0.5
-	var origin := camera.project_ray_origin(center)
-	var direction := camera.project_ray_normal(center)
-	var attack_range := _attack_range_for_profile(attack_type, profile)
-	var target := origin + direction * attack_range
-
-	var space := get_world_3d().direct_space_state
-	var params := PhysicsRayQueryParameters3D.create(origin, target)
-	params.exclude = [self]
-	params.collide_with_areas = false
-	params.collide_with_bodies = true
-
-	var result := space.intersect_ray(params)
-	if not result:
-		return
-
-	var collider: Object = result.get("collider")
-	var target_stats := _find_actor_stats(collider)
-	if not target_stats:
-		return
-
-	var attack := _build_attack_info(attack_type, origin, direction, profile)
-	if not attack:
-		return
-	if not _can_pay_attack_cost(attack):
-		return
-	target_stats.apply_attack(attack)
-
-func _build_attack_info(
-	attack_type: StringName,
-	origin: Vector3,
-	direction: Vector3,
-	profile: AttackInfo
-) -> AttackInfo:
-	var attack := _attack_from_profile(profile, attack_type, origin, direction)
-	if attack:
-		return attack
-
-	var attack_meta := {"range": _attack_range_for_profile(attack_type, profile), "delivery_type": AttackInfo.DELIVERY_RAYCAST}
-	match attack_type:
-		AttackInfo.TYPE_LIGHTNING:
-			return AttackInfo.lightning(ATTACK_DAMAGE, self, origin, direction, LIGHTNING_MAGICKA_COST, attack_meta)
-		_:
-			return AttackInfo.melee(ATTACK_DAMAGE, self, origin, direction, 0.0, attack_meta)
-
-func _attack_from_profile(
-	profile: AttackInfo,
-	attack_type: StringName,
-	origin: Vector3,
-	direction: Vector3
-) -> AttackInfo:
-	if not profile:
-		return null
-	var attack := profile.duplicate() as AttackInfo
-	if not attack:
-		return null
-	attack.instigator = self
-	attack.origin = origin
-	attack.direction = direction
-	if attack.damage <= 0.0:
-		attack.damage = ATTACK_DAMAGE
-	if attack.attack_type == StringName():
-		attack.attack_type = attack_type
-	if attack.attack_type == AttackInfo.TYPE_LIGHTNING and attack.magicka_cost <= 0.0:
-		attack.magicka_cost = LIGHTNING_MAGICKA_COST
-	if attack.delivery_type == StringName():
-		attack.delivery_type = AttackInfo.DELIVERY_RAYCAST
-	if attack.range <= 0.0:
-		attack.range = ATTACK_RANGE
-	if attack.damage_type == StringName():
-		attack.damage_type = AttackInfo.default_damage_type(attack.attack_type)
-	return attack
-
-func _attack_range_for_profile(attack_type: StringName, profile: AttackInfo) -> float:
-	if profile and profile.range > 0.0:
-		return profile.range
-	if attack_type == AttackInfo.TYPE_LIGHTNING:
-		return ATTACK_RANGE
-	return ATTACK_RANGE
-
-func _can_pay_attack_cost(attack: AttackInfo) -> bool:
-	if attack.magicka_cost <= 0.0:
-		return true
-	if not stats:
-		return false
-	return stats.spend_magicka(attack.magicka_cost)
+	var collider: Object = ray_data.get("collider")
+	if collider:
+		var target_stats := _find_actor_stats(collider)
+		if target_stats:
+			var attack := _build_attack_info_from_config(config, ray_data.get("origin"), ray_data.get("direction"))
+			if attack:
+				target_stats.apply_attack(attack)
+	_spawn_attack_vfx(ray_data.get("origin"), ray_data.get("hit_position"), config)
 
 func _find_actor_stats(root: Object) -> ActorStats:
 	if not root:
@@ -309,3 +298,95 @@ func _find_actor_stats(root: Object) -> ActorStats:
 				if candidate:
 					return candidate
 	return null
+
+func _cast_attack_ray(range: float) -> Dictionary:
+	if not camera:
+		return {}
+	var viewport := camera.get_viewport()
+	if not viewport:
+		return {}
+	var center := viewport.get_visible_rect().size * 0.5
+	var origin := camera.project_ray_origin(center)
+	var direction := camera.project_ray_normal(center)
+	var target := origin + direction * range
+
+	var world := get_world_3d()
+	if not world:
+		return {}
+	var space := world.direct_space_state
+	var params := PhysicsRayQueryParameters3D.create(origin, target)
+	params.exclude = [self]
+	params.collide_with_areas = false
+	params.collide_with_bodies = true
+
+	var result := space.intersect_ray(params)
+	if result:
+		result["origin"] = origin
+		result["direction"] = direction
+		result["hit_position"] = result.get("position", target)
+		return result
+
+	return {
+		"origin": origin,
+		"direction": direction,
+		"hit_position": target,
+	}
+
+func _build_attack_info_from_config(config: Dictionary, origin: Vector3, direction: Vector3) -> AttackInfo:
+	var attack_type: StringName = config.get("attack_type", AttackInfo.TYPE_MELEE)
+	var damage: float = config.get("damage", ATTACK_DAMAGE)
+	var magicka_cost: float = 0.0 # Cost is spent on wind-up.
+	var meta := {
+		"range": config.get("range", ATTACK_RANGE),
+		"delivery_type": AttackInfo.DELIVERY_RAYCAST,
+		"damage_type": config.get("damage_type", AttackInfo.default_damage_type(attack_type)),
+	}
+	match attack_type:
+		AttackInfo.TYPE_LIGHTNING:
+			return AttackInfo.lightning(damage, self, origin, direction, magicka_cost, meta)
+		_:
+			return AttackInfo.melee(damage, self, origin, direction, magicka_cost, meta)
+
+func _spend_attack_cost(config: Dictionary) -> bool:
+	var magicka_cost: float = config.get("magicka_cost", 0.0)
+	if magicka_cost <= 0.0:
+		return true
+	if not stats:
+		return false
+	return stats.spend_magicka(magicka_cost)
+
+func _spawn_attack_vfx(origin: Vector3, target: Vector3, config: Dictionary) -> void:
+	if not is_inside_tree():
+		return
+	if origin == null or target == null:
+		return
+	var color := Color(1, 1, 1, 1)
+	if config.get("attack_type", AttackInfo.TYPE_MELEE) == AttackInfo.TYPE_LIGHTNING:
+		color = Color(0.55, 0.8, 1.0, 1.0)
+	var mesh := ImmediateMesh.new()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	mesh.surface_set_color(color)
+	mesh.surface_add_vertex(origin)
+	mesh.surface_add_vertex(target)
+	mesh.surface_end()
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = StandardMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+
+	var instance := MeshInstance3D.new()
+	instance.mesh = mesh
+	instance.material_override = mat
+	instance.set_as_top_level(true)
+	instance.global_transform = Transform3D.IDENTITY
+
+	var parent := get_tree().current_scene if get_tree() and get_tree().current_scene else self
+	parent.add_child(instance)
+
+	var timer := get_tree().create_timer(ATTACK_VFX_DURATION)
+	timer.timeout.connect(func():
+		if is_instance_valid(instance):
+			instance.queue_free()
+	)

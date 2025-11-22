@@ -1,13 +1,16 @@
-[gd_resource type="AttackInfo" format=3]
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/shared/AttackInfo.gd" id="1"]
 
 [resource]
+script = ExtResource("1")
 damage = 20.0
 damage_type = &"shock"
 delivery_type = &"raycast"
 attack_type = &"lightning"
-range = 14.0
+attack_range = 14.0
 area_radius = 0.0
-cooldown = 0.6
+cooldown = 1.6
 hit_window = Vector2(0, 0)
 knockback_strength = 0.0
 special_effects = []

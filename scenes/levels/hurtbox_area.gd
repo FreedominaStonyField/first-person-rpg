@@ -1,7 +1,5 @@
 extends Area3D
 
-const AttackInfo := preload("res://scenes/shared/AttackInfo.gd")
-
 @export var damage_amount := 10.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var debug_print := false
