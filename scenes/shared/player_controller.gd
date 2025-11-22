@@ -17,6 +17,7 @@ const PUNCH_ATTACK := {
 	"damage": 10.0,
 	"damage_type": AttackInfo.DAMAGE_PHYSICAL,
 	"range": 1.8,
+	"knockback_strength": 10.0,
 	"magicka_cost": 0.0,
 	"windup_time": 0.15,
 	"active_time": 0.08,
@@ -28,6 +29,7 @@ const LIGHTNING_ATTACK := {
 	"damage": 20.0,
 	"damage_type": AttackInfo.DAMAGE_SHOCK,
 	"range": 4.0,
+	"knockback_strength": 14.0,
 	"magicka_cost": 20.0,
 	"windup_time": 0.2,
 	"active_time": 0.1,
@@ -443,6 +445,7 @@ func _build_attack_info_from_config(config: Dictionary, origin: Vector3, directi
 		"range": config.get("range", ATTACK_RANGE),
 		"delivery_type": AttackInfo.DELIVERY_RAYCAST,
 		"damage_type": config.get("damage_type", AttackInfo.default_damage_type(attack_type)),
+		"knockback_strength": config.get("knockback_strength", 0.0),
 	}
 	match attack_type:
 		AttackInfo.TYPE_LIGHTNING:

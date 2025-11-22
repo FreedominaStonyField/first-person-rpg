@@ -42,6 +42,7 @@ func take_damage(amount: float) -> void:
 func apply_attack(attack: AttackInfo) -> void:
 	if not attack or not _is_alive:
 		return
+	_apply_knockback(attack)
 	_apply_attack_damage(attack)
 
 func restore_health(amount: float) -> void:
@@ -143,3 +144,46 @@ func _apply_attack_damage(attack: AttackInfo) -> void:
 			_is_alive = false
 			# print("ActorStats: Health depleted; triggering death handling.")
 			emit_signal("died", get_parent())
+
+func _apply_knockback(attack: AttackInfo) -> void:
+	if attack.knockback_strength <= 0.0:
+		return
+	var body := _find_actor_body()
+	if not body:
+		return
+	var direction := _resolve_attack_direction(attack)
+	if direction == Vector3.ZERO:
+		return
+	var impulse := direction.normalized() * attack.knockback_strength
+	if body is CharacterBody3D:
+		var character := body as CharacterBody3D
+		var vertical := character.velocity.y
+		character.velocity = impulse
+		character.velocity.y = vertical
+	elif body is RigidBody3D:
+		var rigid := body as RigidBody3D
+		rigid.apply_impulse(Vector3.ZERO, impulse)
+
+func _find_actor_body() -> Node3D:
+	var node: Node = self
+	while node:
+		if node is CharacterBody3D or node is RigidBody3D:
+			return node as Node3D
+		node = node.get_parent()
+	return null
+
+func _resolve_attack_direction(attack: AttackInfo) -> Vector3:
+	if attack.direction != Vector3.ZERO:
+		return attack.direction.normalized()
+	var body := _find_actor_body()
+	var target_pos := body.global_transform.origin if body else Vector3.ZERO
+	if attack.instigator and attack.instigator is Node3D:
+		var instigator_pos := (attack.instigator as Node3D).global_transform.origin
+		var dir := target_pos - instigator_pos
+		if dir != Vector3.ZERO:
+			return dir.normalized()
+	if attack.origin != Vector3.ZERO:
+		var dir := target_pos - attack.origin
+		if dir != Vector3.ZERO:
+			return dir.normalized()
+	return Vector3.ZERO
