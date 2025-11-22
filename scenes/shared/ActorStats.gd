@@ -26,7 +26,7 @@ func _ready() -> void:
 	_log_all_stats("ready")
 
 func _process(delta: float) -> void:
-	if enable_regeneration:
+	if enable_regeneration and _is_alive:
 		_regenerate(delta)
 
 func _regenerate(delta: float) -> void:
