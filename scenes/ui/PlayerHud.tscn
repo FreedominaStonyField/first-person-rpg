@@ -15,6 +15,13 @@ color = Color(0.6, 0, 0, 0)
 mouse_filter = 2
 visible = false
 
+[node name="PopupContainer" type="Control" parent="."]
+anchor_left = 0.3
+anchor_top = 0.02
+anchor_right = 0.7
+anchor_bottom = 0.25
+mouse_filter = 2
+
 [node name="MainAttackStatusLabel" type="Label" parent="."]
 anchor_left = 0.6
 anchor_top = 0.02

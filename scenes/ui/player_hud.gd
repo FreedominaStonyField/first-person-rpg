@@ -5,6 +5,8 @@ extends Control
 @export var damage_flash_peak_alpha := 0.35
 @export var damage_flash_rise_time := 0.08
 @export var damage_flash_fade_time := 0.25
+@export var fail_popup_scene: PackedScene = preload("res://scenes/ui/PopupText.tscn")
+@export var fail_popup_color := Color(0.9, 0.25, 0.25, 1.0)
 
 var stats: ActorStats = null
 
@@ -14,6 +16,7 @@ var _damage_flash_tween: Tween = null
 @onready var _stamina_bar: ProgressBar = $HudMarginContainer/VitalsBox/StaminaBar
 @onready var _magicka_bar: ProgressBar = $HudMarginContainer/VitalsBox/MagickaBar
 @onready var _damage_flash: ColorRect = $DamageFlashOverlay
+@onready var _popup_container: Control = $PopupContainer
 @onready var _main_attack_status: Label = $MainAttackStatusLabel
 
 func _ready() -> void:
@@ -63,6 +66,21 @@ func set_main_attack_status(status: String) -> void:
 	if not _main_attack_status:
 		return
 	_main_attack_status.text = status
+
+func spawn_popup_text(message: String, color: Color = fail_popup_color) -> void:
+	if not fail_popup_scene or not _popup_container:
+		return
+	var popup := fail_popup_scene.instantiate()
+	if popup is PopupText:
+		var typed_popup := popup as PopupText
+		typed_popup.set_text(message)
+		typed_popup.set_color(color)
+	elif popup.has_method("set_text"):
+		popup.set_text(message)
+	_popup_container.add_child(popup)
+	if popup is Control:
+		var control_popup := popup as Control
+		control_popup.position = (_popup_container.size * 0.5) + Vector2(0.0, -8.0)
 
 func _on_core_stat_changed(stat_name: String, previous_value: float, current_value: float, max_value: float) -> void:
 	match stat_name:

@@ -54,6 +54,8 @@ var is_sprinting := false
 @export var carry_mass_threshold := 30.0
 @export var max_carry_speed_penalty := 0.4
 @export var push_force := 8.0
+@export var debug_combat_visuals := false
+@export var debug_visual_duration := 0.5
 
 @onready var camera: Camera3D = $Camera3D
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
@@ -241,8 +243,10 @@ func _physics_process(delta: float) -> void:
 
 func _try_start_attack(slot: StringName, config: Dictionary) -> void:
 	if attack_state != AttackState.IDLE:
+		_show_attack_fail_popup("Recovering")
 		return
 	if not _spend_attack_cost(config):
+		_show_attack_fail_popup("Not enough Magicka")
 		return
 	attack_state = AttackState.WINDUP
 	attack_timer = config.get("windup_time", 0.0)
@@ -277,8 +281,13 @@ func _execute_active_hit(config: Dictionary) -> void:
 	if not camera:
 		return
 
-	var range :float= config.get("range", ATTACK_RANGE)
-	var ray_data := _cast_attack_ray(range)
+	var attack_range: float = config.get("range", ATTACK_RANGE)
+	var ray_data := _cast_attack_ray(attack_range)
+	if debug_combat_visuals and not ray_data.is_empty():
+		var origin: Vector3 = ray_data.get("origin", global_transform.origin)
+		var hit_position: Vector3 = ray_data.get("hit_position", origin)
+		var has_hit: bool = ray_data.has("collider") and ray_data.get("collider") != null
+		_debug_draw_attack_ray(origin, hit_position, has_hit)
 	if ray_data.is_empty():
 		return
 	var collider: Object = ray_data.get("collider")
@@ -303,7 +312,7 @@ func _find_actor_stats(root: Object) -> ActorStats:
 					return candidate
 	return null
 
-func _cast_attack_ray(range: float) -> Dictionary:
+func _cast_attack_ray(attack_range: float) -> Dictionary:
 	if not camera:
 		return {}
 	var viewport := camera.get_viewport()
@@ -312,7 +321,7 @@ func _cast_attack_ray(range: float) -> Dictionary:
 	var center := viewport.get_visible_rect().size * 0.5
 	var origin := camera.project_ray_origin(center)
 	var direction := camera.project_ray_normal(center)
-	var target := origin + direction * range
+	var target := origin + direction * attack_range
 
 	var world := get_world_3d()
 	if not world:
@@ -366,6 +375,43 @@ func _set_attack_status_message(state: int) -> void:
 	if attack_label != "":
 		message += " (%s)" % attack_label
 	player_hud.set_main_attack_status(message)
+
+func _debug_draw_attack_ray(origin: Vector3, hit_position: Vector3, has_hit: bool) -> void:
+	if not is_inside_tree():
+		return
+	var color := Color(0.2, 0.8, 0.2, 0.8) if has_hit else Color(0.9, 0.2, 0.2, 0.6)
+	var mesh := ImmediateMesh.new()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	mesh.surface_set_color(color)
+	mesh.surface_add_vertex(origin)
+	mesh.surface_add_vertex(hit_position)
+	mesh.surface_end()
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = StandardMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+
+	var instance := MeshInstance3D.new()
+	instance.mesh = mesh
+	instance.material_override = mat
+	instance.set_as_top_level(true)
+	instance.global_transform = Transform3D.IDENTITY
+
+	var parent := get_tree().current_scene if get_tree() and get_tree().current_scene else self
+	parent.add_child(instance)
+
+	var timer := get_tree().create_timer(debug_visual_duration)
+	timer.timeout.connect(func():
+		if is_instance_valid(instance):
+			instance.queue_free()
+	)
+
+func _show_attack_fail_popup(message: String) -> void:
+	if not player_hud or not player_hud.has_method("spawn_popup_text"):
+		return
+	player_hud.spawn_popup_text(message)
 
 func _build_attack_info_from_config(config: Dictionary, origin: Vector3, direction: Vector3) -> AttackInfo:
 	var attack_type: StringName = config.get("attack_type", AttackInfo.TYPE_MELEE)
