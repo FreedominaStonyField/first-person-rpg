@@ -58,6 +58,7 @@ var is_sprinting := false
 @export var push_force := 8.0
 @export var debug_combat_visuals := false
 @export var debug_visual_duration := 0.5
+@export var range_marker_scene: PackedScene = preload("res://scenes/shared/RangeMarker.tscn")
 
 @onready var camera: Camera3D = $Camera3D
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
@@ -72,6 +73,7 @@ var attack_state: int = AttackState.IDLE
 var attack_timer := 0.0
 var _current_attack_config: Dictionary = {}
 var _current_attack_slot: StringName = ""
+var _range_marker: Node3D = null
 
 func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -88,6 +90,7 @@ func _ready() -> void:
 	if player_hud and stats:
 		player_hud.set_stats(stats)
 	_set_attack_status_message(AttackState.IDLE)
+	_spawn_range_marker()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and camera:
@@ -245,6 +248,7 @@ func _physics_process(delta: float) -> void:
 		_try_start_attack("offhand", LIGHTNING_ATTACK)
 
 	_update_attack_state(delta)
+	_update_range_marker()
 
 func _try_start_attack(slot: StringName, config: Dictionary) -> void:
 	if attack_state != AttackState.IDLE:
@@ -496,3 +500,34 @@ func _spawn_attack_vfx(origin: Vector3, target: Vector3, config: Dictionary) -> 
 		if is_instance_valid(instance):
 			instance.queue_free()
 	)
+
+func _spawn_range_marker() -> void:
+	if _range_marker or not range_marker_scene:
+		return
+	var marker := range_marker_scene.instantiate()
+	if marker and marker is Node3D:
+		_range_marker = marker as Node3D
+		add_child(_range_marker)
+		if _range_marker is VisualInstance3D:
+			(_range_marker as VisualInstance3D).visible = false
+
+func _update_range_marker() -> void:
+	if not _range_marker or not camera:
+		return
+	var should_show := debug_combat_visuals
+	if _range_marker is VisualInstance3D:
+		(_range_marker as VisualInstance3D).visible = should_show
+	if not should_show:
+		return
+	var origin := camera.global_transform.origin
+	var direction := -camera.global_transform.basis.z
+	var distance := _current_attack_range()
+	var target := origin + direction * distance
+	_range_marker.global_transform.origin = target
+
+func _current_attack_range() -> float:
+	if not _current_attack_config.is_empty():
+		return _current_attack_config.get("range", ATTACK_RANGE)
+	if main_attack_profile and main_attack_profile.attack_range > 0.0:
+		return main_attack_profile.attack_range
+	return PUNCH_ATTACK.get("range", ATTACK_RANGE)
