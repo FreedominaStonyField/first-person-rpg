@@ -1,7 +1,10 @@
 extends CharacterBody3D
 class_name EnemyController
 
-@export var attack_damage := 15.0
+@export var is_aggressive_on_sight := false
+@export var flees_at_low_health := true
+@export_range(0.0, 1.0, 0.01) var flee_health_fraction := 0.25
+@export var attack_damage := 10.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_profile: AttackInfo
 @export var attack_cooldown := 1.2
@@ -14,7 +17,6 @@ class_name EnemyController
 @export var max_fall_speed := 50.0
 @export var stopping_distance := 1.5
 @export var attack_range_margin := 0.5
-@export var flee_health_threshold := 0.25
 @export var navigation_target_epsilon := 0.15
 @export var wall_avoid_distance := 0.7
 @export var wall_push_strength := 0.5
@@ -40,6 +42,7 @@ var _last_distance_to_target := -1.0
 var _stuck_time_accum := 0.0
 var _stuck_repath_timer := 0.0
 var _rng := RandomNumberGenerator.new()
+var _received_damage := false
 
 func _ready() -> void:
 	_rng.randomize()
@@ -55,18 +58,21 @@ func _ready() -> void:
 		_attack_area.connect("body_exited", Callable(self, "_on_attack_body_exited"))
 	if _self_stats and not _self_stats.is_connected("died", Callable(self, "_on_self_died")):
 		_self_stats.connect("died", Callable(self, "_on_self_died"))
+	if _self_stats and not _self_stats.is_connected("damaged", Callable(self, "_on_self_damaged")):
+		_self_stats.connect("damaged", Callable(self, "_on_self_damaged"))
 	if navigation_agent:
 		navigation_agent.target_desired_distance = stopping_distance
-	if behavior_state_machine and player:
-		behavior_state_machine.enter_combat()
+	_update_engagement()
 	if player:
 		_last_player_position = player.global_transform.origin
 		# print("EnemyController: found player at ", _last_player_position)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if behavior_state_machine:
-		behavior_state_machine.process_step(_delta)
-		_update_combat_state()
+		_update_engagement()
+		behavior_state_machine.process_step(delta)
+		if _is_in_combat_state():
+			_update_combat_state()
 	_track_player_position()
 
 func _physics_process(delta: float) -> void:
@@ -186,9 +192,11 @@ func _is_player_in_attack_range() -> bool:
 func _should_flee() -> bool:
 	if not _self_stats:
 		return false
+	if not flees_at_low_health:
+		return false
 	if ActorStats.MAX_STAT <= 0.0:
 		return false
-	return (_self_stats.health / ActorStats.MAX_STAT) <= flee_health_threshold
+	return (_self_stats.health / ActorStats.MAX_STAT) <= flee_health_fraction
 
 func update_navigation_target(target: Vector3) -> void:
 	if not navigation_agent:
@@ -380,6 +388,10 @@ func _on_self_died(actor: Node) -> void:
 		return
 	_disable_attack_loops()
 
+func _on_self_damaged(_amount: float, _current_health: float, _max_health: float) -> void:
+	_received_damage = true
+	_update_engagement()
+
 func _disable_attack_loops() -> void:
 	_cooldown_remaining = INF
 	_tracked_targets.clear()
@@ -426,3 +438,27 @@ func _resolve_attack_cooldown(attack: AttackInfo) -> float:
 	if attack and attack.cooldown > 0.0:
 		return attack.cooldown
 	return attack_cooldown
+
+func _is_player_in_aggression_range() -> bool:
+	if not player:
+		return false
+	return global_transform.origin.distance_to(player.global_transform.origin) <= max(stopping_distance, attack_range_margin) + 6.0
+
+func _is_in_combat_state() -> bool:
+	if not behavior_state_machine:
+		return false
+	return behavior_state_machine.current_state == behavior_state_machine.combat_state_machine
+
+func _update_engagement() -> void:
+	if not behavior_state_machine or not player:
+		return
+
+	if _is_in_combat_state():
+		return
+
+	if is_aggressive_on_sight and _is_player_in_aggression_range():
+		behavior_state_machine.enter_combat()
+		return
+
+	if _received_damage:
+		behavior_state_machine.enter_combat()

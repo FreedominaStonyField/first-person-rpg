@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://br7t2su706582"]
+[gd_scene load_steps=16 format=3 uid="uid://c3oro1bq5e7is"]
 
 [ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="1"]
 [ext_resource type="Script" uid="uid://dptpyua3c2j1a" path="res://scenes/enemies/enemy_health_label.gd" id="2"]
@@ -13,18 +13,19 @@
 [ext_resource type="Resource" path="res://scenes/shared/attacks/EnemyBashAttack.tres" id="11_bash"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
-radius = 0.51171875
+radius = 0.50683594
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_red"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_red"]
-albedo_color = Color(1, 0, 0, 1)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_12rgf"]
+albedo_color = Color(0.37753016, 0.5956128, 0.4160812, 1)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_attack"]
-radius = 1.6
+radius = 2.6456902
 
-[node name="EnemyCharacter" type="CharacterBody3D"]
+[node name="AgressiveEnemy" type="CharacterBody3D"]
 script = ExtResource("4_cye0q")
+is_aggressive_on_sight = true
 attack_profile = ExtResource("11_bash")
 attack_area_path = NodePath("EnemyCharacter#AttackRangeArea")
 attack_ray_path = NodePath("EnemyCharacter#SwipeRay")
@@ -40,12 +41,13 @@ debug_color = Color(0, 0.4813334, 0.76, 1)
 
 [node name="EnemyCharacter#CapsuleVisual" type="MeshInstance3D" parent="."]
 mesh = SubResource("CapsuleMesh_red")
-surface_material_override/0 = SubResource("StandardMaterial3D_red")
+surface_material_override/0 = SubResource("StandardMaterial3D_12rgf")
 
 [node name="EnemyCharacter#AttackRangeArea" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
 [node name="EnemyCharacter#AttackRangeCollision" type="CollisionShape3D" parent="EnemyCharacter#AttackRangeArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 shape = SubResource("SphereShape3D_attack")
 
 [node name="EnemyCharacter#SwipeRay" type="RayCast3D" parent="."]

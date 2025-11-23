@@ -15,9 +15,15 @@ Wiring (Enemy.tscn)
     - FleeState (combat_flee_state.gd)
 
 Runtime flow (baseline test)
-- EnemyController finds the player, enters combat automatically.
-- BehaviorStateMachine routes into CombatStateMachine; combat machine chooses Attack/Chase/Flee each frame based on distance and health:
-  - Flee if health <= flee_health_threshold (25% default).
+- EnemyController looks for the player; aggressive archetypes enter combat on sight when the player is within engagement range, while defensive archetypes wait until they take damage.
+- BehaviorStateMachine routes into CombatStateMachine after combat is engaged; combat machine chooses Attack/Chase/Flee each frame based on distance and health:
+  - Flee if flees_at_low_health is true and health/max_health <= flee_health_fraction (25% default).
   - Attack if within stopping_distance + attack_range_margin.
   - Otherwise Chase using NavigationAgent3D.
 - Attack state fires EnemyController.attempt_attack(); Chase/Flee set velocity toward/away via NavigationAgent3D path.
+
+Archetype knobs (EnemyController exports)
+- is_aggressive_on_sight (true for aggressive/brave)
+- flees_at_low_health (true for coward/defensive)
+- flee_health_fraction (low-health cutoff, default 0.25)
+- move_speed and attack_damage remain per-enemy tuning values.
