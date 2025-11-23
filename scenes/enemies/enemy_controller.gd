@@ -5,8 +5,9 @@ class_name EnemyController
 @export var flees_at_low_health := true
 @export_range(0.0, 1.0, 0.01) var flee_health_fraction := 0.25
 @export var player_group: StringName = "player"
-@export var max_health_reference: float = ActorStats.MAX_STAT
-@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against max_health_reference (default: ActorStats.MAX_STAT)."
+@export var max_health: float = ActorStats.MAX_STAT
+@export var max_health_reference: float = -1.0
+@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against max_health_reference or the StatsComponent max_health."
 @export var attack_damage := 10.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_profile: AttackInfo
@@ -60,6 +61,7 @@ func _ready() -> void:
 	_attack_collision_shape = _resolve_attack_collision_shape()
 	_attack_ray = _resolve_attack_ray()
 	_self_stats = _find_actor_stats(self)
+	_apply_health_settings()
 	_apply_attack_profile_settings()
 
 	if _attack_area:
@@ -196,6 +198,14 @@ func _find_first_child_of_type(target_type: StringName) -> Node:
 		if child is Node and (child as Node).is_class(target_type):
 			return child
 	return null
+
+func _apply_health_settings() -> void:
+	if not _self_stats:
+		return
+	if max_health > 0.0 and _self_stats.has_method("set_max_health"):
+		_self_stats.set_max_health(max_health, true)
+	if max_health_reference <= 0.0:
+		max_health_reference = max_health
 
 func _apply_attack_profile_settings() -> void:
 	if not attack_profile:

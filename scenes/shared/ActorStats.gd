@@ -149,6 +149,15 @@ func _apply_attack_damage(attack: AttackInfo) -> void:
 func get_max_health() -> float:
 	return max_health
 
+func set_max_health(new_max_health: float, reset_current_health := true) -> void:
+	if new_max_health <= 0.0:
+		return
+	max_health = new_max_health
+	if reset_current_health:
+		health = max_health
+	else:
+		health = clamp(health, 0.0, max_health)
+
 func _apply_knockback(attack: AttackInfo) -> void:
 	if attack.knockback_strength <= 0.0:
 		return
