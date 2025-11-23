@@ -32,7 +32,7 @@ Project layout follows Godot best practices so assets, scenes, and scripts stay 
 - **Combat/Attacks**: Placeholder melee and lightning attacks work via camera raycasts. `AttackInfo` resource encapsulates damage, origin/direction, instigator, and magicka cost so enemies and players share the same structure. Needs VFX/SFX and hit reactions.
 - **Stats/Progression**: Health, stamina, magicka fully functional with regen toggle and spend helpers. XP accrues and levels up with a simple linear curve but no stat scaling yet. Signals power UI updates and death flow.
 - **UI/HUD**: Health/Stamina/Magicka bars and damage flash are wired to `ActorStats`. No inventory, quest, or compass yet.
-- **Enemy AI**: Behavior/combat machines switch between chase, attack, and flee based on distance and health threshold (25% default). Enemies pathfind with `NavigationAgent3D`, attack via area overlap or ray, and respect cooldowns. Death stops AI and attacks.
+- **Enemy AI**: Behavior/combat machines switch between chase, attack, and flee; aggressive archetypes engage on sight, defensive ones wait until damaged, and fleeing is gated by `flees_at_low_health` (25% cutoff by default). Enemies pathfind with `NavigationAgent3D`, attack via area overlap or ray, and respect cooldowns. Death stops AI and attacks.
 - **Death/Game Over**: Non-player actors ragdoll on death; player death disables controls, shows a fade-in overlay, and reloads the active scene after a randomized delay. No checkpoint or save/load integration yet.
 - **Content/Levels**: Only the movement test level exists; no world streaming, dungeons, or quests. Enemy setup lives in `scenes/enemies/Enemy.tscn` (dummy variant present).
 
