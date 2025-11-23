@@ -6,8 +6,12 @@ class_name EnemyController
 @export_range(0.0, 1.0, 0.01) var flee_health_fraction := 0.25
 @export var player_group: StringName = "player"
 @export var max_health: float = ActorStats.MAX_STAT
-@export var max_health_reference: float = -1.0
-@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against max_health_reference or the StatsComponent max_health."
+@export var flee_health_baseline: float = -1.0:
+	set(value):
+		_flee_health_baseline = value
+	get:
+		return _flee_health_baseline
+@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against flee_health_baseline (defaults to this controller's max_health or the StatsComponent max_health)."
 @export var attack_damage := 10.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_profile: AttackInfo
@@ -41,6 +45,7 @@ var _last_player_position: Vector3 = Vector3.ZERO
 var _attack_area: Area3D
 var _attack_ray: RayCast3D
 var _attack_collision_shape: CollisionShape3D
+var _flee_health_baseline := -1.0
 var _cooldown_remaining := 0.0
 var _tracked_targets := {}
 var _self_stats: ActorStats = null
@@ -204,8 +209,10 @@ func _apply_health_settings() -> void:
 		return
 	if max_health > 0.0 and _self_stats.has_method("set_max_health"):
 		_self_stats.set_max_health(max_health, true)
-	if max_health_reference <= 0.0:
-		max_health_reference = max_health
+	if flee_health_baseline <= 0.0:
+		_flee_health_baseline = max_health
+	else:
+		_flee_health_baseline = flee_health_baseline
 
 func _apply_attack_profile_settings() -> void:
 	if not attack_profile:
@@ -285,7 +292,7 @@ func _should_flee() -> bool:
 		return false
 	if not flees_at_low_health:
 		return false
-	var max_health: float = max_health_reference
+	var max_health: float = _flee_health_baseline
 	if _self_stats and _self_stats.has_method("get_max_health"):
 		max_health = max(max_health, _self_stats.get_max_health())
 	else:
