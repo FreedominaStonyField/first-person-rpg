@@ -1,0 +1,89 @@
+[gd_scene load_steps=16 format=3 uid="uid://da41r13mgarjg"]
+
+[ext_resource type="Script" uid="uid://cux4ue1l25rak" path="res://scenes/enemies/enemy_controller.gd" id="1_5u8fa"]
+[ext_resource type="Resource" path="res://scenes/shared/attacks/EnemyBashAttack.tres" id="2_pm7wo"]
+[ext_resource type="PackedScene" path="res://scenes/shared/StatsComponent.tscn" id="3_2t7dx"]
+[ext_resource type="Script" uid="uid://dptpyua3c2j1a" path="res://scenes/enemies/enemy_health_label.gd" id="4_q2kxy"]
+[ext_resource type="Script" uid="uid://cnrcn6yeejvjq" path="res://scenes/shared/DeathHandlerComponent.gd" id="5_7esi6"]
+[ext_resource type="Script" uid="uid://bec0agfuxgv37" path="res://scenes/enemies/ai/behavior_state_machine.gd" id="6_14qcd"]
+[ext_resource type="Script" uid="uid://jl20nfdx6mox" path="res://scenes/enemies/ai/states/behavior_idle_state.gd" id="7_6xi5w"]
+[ext_resource type="Script" uid="uid://xy6x24s6f7sg" path="res://scenes/enemies/ai/combat_state_machine.gd" id="8_1e2r0"]
+[ext_resource type="Script" uid="uid://x0g2hu3xpju3" path="res://scenes/enemies/ai/states/combat_attack_state.gd" id="9_kadja"]
+[ext_resource type="Script" uid="uid://6in3o1smlv5" path="res://scenes/enemies/ai/states/combat_chase_state.gd" id="10_nu3b1"]
+[ext_resource type="Script" uid="uid://qcf7c6gt57fd" path="res://scenes/enemies/ai/states/combat_flee_state.gd" id="11_b4h6v"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
+radius = 0.51171875
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_red"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5u8fa"]
+albedo_color = Color(0.25566667, 0.23000002, 1, 1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_attack"]
+radius = 1.6
+
+[node name="EnemyCharacter" type="CharacterBody3D"]
+script = ExtResource("1_5u8fa")
+is_aggressive_on_sight = true
+flees_at_low_health = false
+max_health_reference = 50.0
+attack_damage = 70.0
+attack_profile = ExtResource("2_pm7wo")
+attack_cooldown = 10.0
+move_speed = 5.0
+stopping_distance = 5.0
+attack_range_margin = 50.0
+
+[node name="EnemyCharacterNavigationAgent" type="NavigationAgent3D" parent="."]
+path_max_distance = 32.0
+height = 1.8
+radius = 0.38
+
+[node name="EnemyCharacterCapsuleCollision" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_red")
+debug_color = Color(0, 0.4813334, 0.76, 1)
+
+[node name="EnemyCharacterCapsuleVisual" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_red")
+surface_material_override/0 = SubResource("StandardMaterial3D_5u8fa")
+
+[node name="EnemyCharacterAttackRangeArea" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="EnemyCharacterAttackRangeCollision" type="CollisionShape3D" parent="EnemyCharacterAttackRangeArea"]
+shape = SubResource("SphereShape3D_attack")
+
+[node name="EnemyCharacterSwipeRay" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+target_position = Vector3(0, 0, -2)
+
+[node name="EnemyCharacterStatsComponent" parent="." instance=ExtResource("3_2t7dx")]
+enable_regeneration = true
+max_health = 50.0
+
+[node name="EnemyCharacterHealthLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+text = "HP: 100"
+script = ExtResource("4_q2kxy")
+
+[node name="EnemyCharacterDeathHandlerComponent" type="Node3D" parent="."]
+script = ExtResource("5_7esi6")
+
+[node name="EnemyCharacterBehaviorStateMachine" type="Node" parent="."]
+script = ExtResource("6_14qcd")
+
+[node name="IdleState" type="Node" parent="EnemyCharacterBehaviorStateMachine"]
+script = ExtResource("7_6xi5w")
+
+[node name="CombatStateMachine" type="Node" parent="EnemyCharacterBehaviorStateMachine"]
+script = ExtResource("8_1e2r0")
+
+[node name="AttackState" type="Node" parent="EnemyCharacterBehaviorStateMachine/CombatStateMachine"]
+script = ExtResource("9_kadja")
+
+[node name="ChaseState" type="Node" parent="EnemyCharacterBehaviorStateMachine/CombatStateMachine"]
+script = ExtResource("10_nu3b1")
+
+[node name="FleeState" type="Node" parent="EnemyCharacterBehaviorStateMachine/CombatStateMachine"]
+script = ExtResource("11_b4h6v")

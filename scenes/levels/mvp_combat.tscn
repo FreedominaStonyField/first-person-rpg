@@ -1,10 +1,11 @@
-[gd_scene load_steps=17 format=3 uid="uid://byhmi4owupg24"]
+[gd_scene load_steps=18 format=3 uid="uid://byhmi4owupg24"]
 
 [ext_resource type="PackedScene" uid="uid://d20kn72k08ytb" path="res://scenes/shared/PlayerController.tscn" id="1_dr3jf"]
 [ext_resource type="Script" uid="uid://b5mujopmnl3f" path="res://scenes/levels/hurtbox_area.gd" id="2_6ocmo"]
 [ext_resource type="PackedScene" uid="uid://br7t2su706582" path="res://scenes/enemies/Enemy.tscn" id="3_8hg6s"]
 [ext_resource type="Script" uid="uid://b3bhxypepwek0" path="res://scenes/shared/game_over_handler.gd" id="4_oojlg"]
 [ext_resource type="PackedScene" uid="uid://c3oro1bq5e7is" path="res://scenes/enemies/Enemy_Aggressive.tscn" id="5_aggro"]
+[ext_resource type="PackedScene" uid="uid://da41r13mgarjg" path="res://scenes/enemies/Glass Cannon.tscn" id="6_8hg6s"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gnott"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -101,7 +102,7 @@ transform = Transform3D(0.96592706, -0.2588193, 0, 0.2588193, 0.96592706, 0, 0, 
 size = Vector3(6.6904297, 3.1594849, 2.2957764)
 
 [node name="PlayerController" parent="." instance=ExtResource("1_dr3jf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6656884, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -43.83163, 9.957171, 0)
 max_carry_speed_penalty = 1.0
 
 [node name="RigidbodyCrateTest" type="RigidBody3D" parent="."]
@@ -133,3 +134,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.283848, 0, -3.1117582)
 [node name="GameOverHandler" type="Node" parent="."]
 script = ExtResource("4_oojlg")
 player_path = NodePath("PlayerController")
+
+[node name="EnemyCharacter3" parent="." instance=ExtResource("6_8hg6s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47.271503, 11.597524, 16.40161)

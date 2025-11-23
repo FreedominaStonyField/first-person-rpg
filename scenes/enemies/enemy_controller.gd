@@ -6,12 +6,13 @@ class_name EnemyController
 @export_range(0.0, 1.0, 0.01) var flee_health_fraction := 0.25
 @export var player_group: StringName = "player"
 @export var max_health: float = ActorStats.MAX_STAT
+## Health value used for flee math; leave at -1 to use max_health/stats max, set lower to flee earlier, higher to flee later.
 @export var flee_health_baseline: float = -1.0:
 	set(value):
 		_flee_health_baseline = value
 	get:
 		return _flee_health_baseline
-@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against flee_health_baseline (defaults to this controller's max_health or the StatsComponent max_health)."
+@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against flee_health_baseline (defaults to this controller's max_health or the StatsComponent max_health).\nDesign usage: lower flee_health_baseline than max_health to make enemies flee earlier; raise it to make them hold longer; leave at -1 to match their max health."
 @export var attack_damage := 10.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_profile: AttackInfo
