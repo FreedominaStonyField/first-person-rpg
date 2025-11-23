@@ -4,14 +4,17 @@ class_name EnemyController
 @export var is_aggressive_on_sight := false
 @export var flees_at_low_health := true
 @export_range(0.0, 1.0, 0.01) var flee_health_fraction := 0.25
+@export var player_group: StringName = "player"
+@export var max_health_reference: float = ActorStats.MAX_STAT
+@export_multiline var dependency_notes := "Aggression detection searches player_group (default: player).\nFlee behavior compares ActorStats health against max_health_reference (default: ActorStats.MAX_STAT)."
 @export var attack_damage := 10.0
 @export var attack_type: StringName = AttackInfo.TYPE_MELEE
 @export var attack_profile: AttackInfo
 @export var attack_cooldown := 1.2
-@export var attack_area_path: NodePath
-@export var attack_ray_path: NodePath
-@export var behavior_state_machine_path: NodePath = NodePath("EnemyCharacter#BehaviorStateMachine")
-@export var navigation_agent_path: NodePath = NodePath("EnemyCharacter#NavigationAgent")
+@export var attack_area_path: NodePath = NodePath("EnemyCharacterAttackRangeArea")
+@export var attack_ray_path: NodePath = NodePath("EnemyCharacterSwipeRay")
+@export var behavior_state_machine_path: NodePath = NodePath("EnemyCharacterBehaviorStateMachine")
+@export var navigation_agent_path: NodePath = NodePath("EnemyCharacterNavigationAgent")
 @export var move_speed := 3.5
 @export var gravity := ProjectSettings.get_setting("physics/3d/default_gravity") as float
 @export var max_fall_speed := 50.0
@@ -26,6 +29,9 @@ class_name EnemyController
 @export var stuck_repath_jitter := 1.2
 @export var stuck_repath_cooldown := 0.5
 
+const ATTACK_RANGE_MARGIN_RATIO := 0.2
+const MIN_ATTACK_RANGE_MARGIN := 0.35
+
 var navigation_agent: NavigationAgent3D = null
 var player: Node3D = null
 var behavior_state_machine: EnemyBehaviorStateMachine = null
@@ -33,6 +39,7 @@ var _last_player_position: Vector3 = Vector3.ZERO
 
 var _attack_area: Area3D
 var _attack_ray: RayCast3D
+var _attack_collision_shape: CollisionShape3D
 var _cooldown_remaining := 0.0
 var _tracked_targets := {}
 var _self_stats: ActorStats = null
@@ -50,8 +57,10 @@ func _ready() -> void:
 	navigation_agent = _resolve_navigation_agent()
 	behavior_state_machine = _resolve_behavior_state_machine()
 	_attack_area = _resolve_attack_area()
+	_attack_collision_shape = _resolve_attack_collision_shape()
 	_attack_ray = _resolve_attack_ray()
 	_self_stats = _find_actor_stats(self)
+	_apply_attack_profile_settings()
 
 	if _attack_area:
 		_attack_area.connect("body_entered", Callable(self, "_on_attack_body_entered"))
@@ -107,19 +116,36 @@ func attempt_attack() -> void:
 	
 func _resolve_attack_area() -> Area3D:
 	if not attack_area_path or attack_area_path == NodePath(""):
-		return null
+		return _find_first_child_of_type("Area3D")
 	var node := get_node_or_null(attack_area_path)
 	if node and node is Area3D:
 		return node as Area3D
+	var fallback := _find_first_child_of_type("Area3D")
+	if fallback:
+		push_warning("EnemyController: attack_area_path was invalid; using first Area3D child instead.")
+		return fallback
 	push_warning("EnemyController: attack_area_path must point to an Area3D.")
+	return null
+
+func _resolve_attack_collision_shape() -> CollisionShape3D:
+	if not _attack_area:
+		return null
+	for child in _attack_area.get_children():
+		if child is CollisionShape3D:
+			return child as CollisionShape3D
+	push_warning("EnemyController: attack area needs a CollisionShape3D child to auto-sync attack ranges.")
 	return null
 
 func _resolve_attack_ray() -> RayCast3D:
 	if not attack_ray_path or attack_ray_path == NodePath(""):
-		return null
+		return _find_first_child_of_type("RayCast3D")
 	var node := get_node_or_null(attack_ray_path)
 	if node and node is RayCast3D:
 		return node as RayCast3D
+	var fallback := _find_first_child_of_type("RayCast3D")
+	if fallback:
+		push_warning("EnemyController: attack_ray_path was invalid; using first RayCast3D child instead.")
+		return fallback
 	push_warning("EnemyController: attack_ray_path must point to a RayCast3D.")
 	return null
 
@@ -132,26 +158,81 @@ func _apply_gravity(delta: float) -> void:
 
 func _resolve_navigation_agent() -> NavigationAgent3D:
 	if not navigation_agent_path or navigation_agent_path == NodePath(""):
-		push_warning("EnemyController: navigation_agent_path is not set.")
-		return null
+		var fallback_agent := _find_first_child_of_type("NavigationAgent3D")
+		if fallback_agent:
+			push_warning("EnemyController: navigation_agent_path not set; using first NavigationAgent3D child.")
+		else:
+			push_warning("EnemyController: navigation_agent_path is not set.")
+		return fallback_agent
 
 	var node := get_node_or_null(navigation_agent_path)
 	if node and node is NavigationAgent3D:
 		return node as NavigationAgent3D
 
+	var fallback := _find_first_child_of_type("NavigationAgent3D")
+	if fallback:
+		push_warning("EnemyController: navigation_agent_path was invalid; using first NavigationAgent3D child instead.")
+		return fallback
 	push_warning("EnemyController: navigation_agent_path must point to a NavigationAgent3D.")
 	return null
 
 func _resolve_behavior_state_machine() -> EnemyBehaviorStateMachine:
 	if not behavior_state_machine_path or behavior_state_machine_path == NodePath(""):
-		return null
+		return _find_first_child_of_type("EnemyBehaviorStateMachine")
 
 	var node := get_node_or_null(behavior_state_machine_path)
 	if node and node is EnemyBehaviorStateMachine:
 		return node as EnemyBehaviorStateMachine
 
+	var fallback := _find_first_child_of_type("EnemyBehaviorStateMachine")
+	if fallback:
+		push_warning("EnemyController: behavior_state_machine_path was invalid; using first EnemyBehaviorStateMachine child instead.")
+		return fallback
 	push_warning("EnemyController: behavior_state_machine_path must point to an EnemyBehaviorStateMachine.")
 	return null
+
+func _find_first_child_of_type(target_type: StringName) -> Node:
+	for child in get_children():
+		if child is Node and (child as Node).is_class(target_type):
+			return child
+	return null
+
+func _apply_attack_profile_settings() -> void:
+	if not attack_profile:
+		return
+	var profile_radius := _attack_area_radius_from_profile()
+	if profile_radius > 0.0:
+		attack_range_margin = _derived_attack_range_margin(profile_radius)
+		_apply_attack_area_radius(profile_radius)
+	if attack_profile.cooldown > 0.0:
+		attack_cooldown = attack_profile.cooldown
+
+func _apply_attack_area_radius(radius: float) -> void:
+	if not _attack_collision_shape:
+		return
+	var shape := _attack_collision_shape.shape
+	if shape is SphereShape3D:
+		if radius > 0.0:
+			(shape as SphereShape3D).radius = radius
+	else:
+		push_warning("EnemyController: attack area collision shape should be a SphereShape3D to mirror attack_profile range.")
+
+func _attack_area_radius_from_profile() -> float:
+	if not attack_profile:
+		return 0.0
+	if attack_profile.area_radius > 0.0:
+		return attack_profile.area_radius
+	return attack_profile.attack_range
+
+func _attack_area_radius_from_shape() -> float:
+	if _attack_collision_shape and _attack_collision_shape.shape is SphereShape3D:
+		return (_attack_collision_shape.shape as SphereShape3D).radius
+	return 0.0
+
+func _derived_attack_range_margin(range: float) -> float:
+	if range <= 0.0:
+		return attack_range_margin
+	return max(range * ATTACK_RANGE_MARGIN_RATIO, MIN_ATTACK_RANGE_MARGIN)
 
 func _track_player_position() -> void:
 	if not player:
@@ -194,9 +275,10 @@ func _should_flee() -> bool:
 		return false
 	if not flees_at_low_health:
 		return false
-	if ActorStats.MAX_STAT <= 0.0:
+	var max_health: float = max(max_health_reference, ActorStats.MAX_STAT)
+	if max_health <= 0.0:
 		return false
-	return (_self_stats.health / ActorStats.MAX_STAT) <= flee_health_fraction
+	return (_self_stats.health / max_health) <= flee_health_fraction
 
 func update_navigation_target(target: Vector3) -> void:
 	if not navigation_agent:
@@ -315,7 +397,7 @@ func _build_attack_info() -> AttackInfo:
 	if attack:
 		return attack
 
-	var attack_meta := {"range": attack_range, "cooldown": attack_cooldown}
+	var attack_meta := {"range": attack_range, "cooldown": _resolve_attack_cooldown(attack_profile)}
 	match attack_type:
 		AttackInfo.TYPE_LIGHTNING:
 			return AttackInfo.lightning(attack_damage, self, origin, direction, 0.0, attack_meta)
@@ -342,7 +424,11 @@ func _build_attack_from_profile(origin: Vector3, direction: Vector3) -> AttackIn
 	if attack.attack_range <= 0.0:
 		attack.attack_range = _attack_range()
 	if attack.cooldown <= 0.0:
-		attack.cooldown = attack_cooldown
+		attack.cooldown = _resolve_attack_cooldown(attack)
+	if attack.area_radius <= 0.0:
+		var area_radius := _attack_area_radius_from_profile()
+		if area_radius > 0.0:
+			attack.area_radius = area_radius
 	return attack
 
 func _first_tracked_target_stats() -> ActorStats:
@@ -404,9 +490,12 @@ func _disable_attack_loops() -> void:
 	set_process(false)
 
 func _find_player() -> Node3D:
-	var players := get_tree().get_nodes_in_group("player")
+	if player_group == StringName():
+		push_warning("EnemyController: player_group is not set; aggression detection will be disabled.")
+		return null
+	var players := get_tree().get_nodes_in_group(player_group)
 	if players.size() == 0:
-		push_warning("EnemyController: no player found in 'player' group.")
+		push_warning("EnemyController: no player found in '%s' group." % player_group)
 		return null
 
 	var player_node := players[0]
@@ -432,17 +521,24 @@ func _find_actor_stats(root: Object) -> ActorStats:
 func _attack_range() -> float:
 	if attack_profile and attack_profile.attack_range > 0.0:
 		return attack_profile.attack_range
+	var area_radius := _attack_area_radius_from_shape()
+	if area_radius > 0.0:
+		return area_radius
 	return stopping_distance + attack_range_margin
 
 func _resolve_attack_cooldown(attack: AttackInfo) -> float:
 	if attack and attack.cooldown > 0.0:
 		return attack.cooldown
+	if attack_profile and attack_profile.cooldown > 0.0:
+		return attack_profile.cooldown
 	return attack_cooldown
 
 func _is_player_in_aggression_range() -> bool:
 	if not player:
 		return false
-	return global_transform.origin.distance_to(player.global_transform.origin) <= max(stopping_distance, attack_range_margin) + 6.0
+	var distance := global_transform.origin.distance_to(player.global_transform.origin)
+	var engagement_range: float = max(_attack_range(), stopping_distance) + attack_range_margin + 6.0
+	return distance <= engagement_range
 
 func _is_in_combat_state() -> bool:
 	if not behavior_state_machine:

@@ -23,62 +23,64 @@ albedo_color = Color(0.37753016, 0.5956128, 0.4160812, 1)
 [sub_resource type="SphereShape3D" id="SphereShape3D_attack"]
 radius = 2.6456902
 
-[node name="AgressiveEnemy" type="CharacterBody3D"]
+[node name="AggressiveEnemyCharacter" type="CharacterBody3D"]
 script = ExtResource("4_cye0q")
 is_aggressive_on_sight = true
 attack_profile = ExtResource("11_bash")
-attack_area_path = NodePath("EnemyCharacter#AttackRangeArea")
-attack_ray_path = NodePath("EnemyCharacter#SwipeRay")
+attack_area_path = NodePath("AggressiveEnemyCharacterAttackRangeArea")
+attack_ray_path = NodePath("AggressiveEnemyCharacterSwipeRay")
+behavior_state_machine_path = NodePath("AggressiveEnemyCharacterBehaviorStateMachine")
+navigation_agent_path = NodePath("AggressiveEnemyCharacterNavigationAgent")
 
-[node name="EnemyCharacter#NavigationAgent" type="NavigationAgent3D" parent="."]
+[node name="AggressiveEnemyCharacterNavigationAgent" type="NavigationAgent3D" parent="."]
 path_max_distance = 32.0
 height = 1.8
 radius = 0.38
 
-[node name="EnemyCharacter#CapsuleCollision" type="CollisionShape3D" parent="."]
+[node name="AggressiveEnemyCharacterCapsuleCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_red")
 debug_color = Color(0, 0.4813334, 0.76, 1)
 
-[node name="EnemyCharacter#CapsuleVisual" type="MeshInstance3D" parent="."]
+[node name="AggressiveEnemyCharacterCapsuleVisual" type="MeshInstance3D" parent="."]
 mesh = SubResource("CapsuleMesh_red")
 surface_material_override/0 = SubResource("StandardMaterial3D_12rgf")
 
-[node name="EnemyCharacter#AttackRangeArea" type="Area3D" parent="."]
+[node name="AggressiveEnemyCharacterAttackRangeArea" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="EnemyCharacter#AttackRangeCollision" type="CollisionShape3D" parent="EnemyCharacter#AttackRangeArea"]
+[node name="AggressiveEnemyCharacterAttackRangeCollision" type="CollisionShape3D" parent="AggressiveEnemyCharacterAttackRangeArea"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 shape = SubResource("SphereShape3D_attack")
 
-[node name="EnemyCharacter#SwipeRay" type="RayCast3D" parent="."]
+[node name="AggressiveEnemyCharacterSwipeRay" type="RayCast3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 target_position = Vector3(0, 0, -2)
 
-[node name="EnemyCharacter#StatsComponent" parent="." instance=ExtResource("1")]
+[node name="AggressiveEnemyCharacterStatsComponent" parent="." instance=ExtResource("1")]
 enable_regeneration = true
 
-[node name="EnemyCharacter#HealthLabel" type="Label3D" parent="."]
+[node name="AggressiveEnemyCharacterHealthLabel" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
 text = "HP: 100"
 script = ExtResource("2")
 
-[node name="EnemyCharacter#DeathHandlerComponent" type="Node3D" parent="."]
+[node name="AggressiveEnemyCharacterDeathHandlerComponent" type="Node3D" parent="."]
 script = ExtResource("3_lk9dp")
 
-[node name="EnemyCharacter#BehaviorStateMachine" type="Node" parent="."]
+[node name="AggressiveEnemyCharacterBehaviorStateMachine" type="Node" parent="."]
 script = ExtResource("5_yhoux")
 
-[node name="IdleState" type="Node" parent="EnemyCharacter#BehaviorStateMachine"]
+[node name="IdleState" type="Node" parent="AggressiveEnemyCharacterBehaviorStateMachine"]
 script = ExtResource("7_hzxm6")
 
-[node name="CombatStateMachine" type="Node" parent="EnemyCharacter#BehaviorStateMachine"]
+[node name="CombatStateMachine" type="Node" parent="AggressiveEnemyCharacterBehaviorStateMachine"]
 script = ExtResource("6_30fmc")
 
-[node name="AttackState" type="Node" parent="EnemyCharacter#BehaviorStateMachine/CombatStateMachine"]
+[node name="AttackState" type="Node" parent="AggressiveEnemyCharacterBehaviorStateMachine/CombatStateMachine"]
 script = ExtResource("8_hau8f")
 
-[node name="ChaseState" type="Node" parent="EnemyCharacter#BehaviorStateMachine/CombatStateMachine"]
+[node name="ChaseState" type="Node" parent="AggressiveEnemyCharacterBehaviorStateMachine/CombatStateMachine"]
 script = ExtResource("9_xopsu")
 
-[node name="FleeState" type="Node" parent="EnemyCharacter#BehaviorStateMachine/CombatStateMachine"]
+[node name="FleeState" type="Node" parent="AggressiveEnemyCharacterBehaviorStateMachine/CombatStateMachine"]
 script = ExtResource("10_fwdrj")
