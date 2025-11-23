@@ -91,6 +91,7 @@ func _ready() -> void:
 		player_hud.set_stats(stats)
 	_set_attack_status_message(AttackState.IDLE)
 	_spawn_range_marker()
+	GameState.store_spawn(self)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and camera:

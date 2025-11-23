@@ -19,6 +19,10 @@ config/icon="res://icon.svg"
 
 enabled=PackedStringArray("res://addons/fancy_editor_sounds/plugin.cfg")
 
+[autoload]
+
+GameState="*res://scripts/autoload/GameState.gd"
+
 [input]
 
 move_forward={

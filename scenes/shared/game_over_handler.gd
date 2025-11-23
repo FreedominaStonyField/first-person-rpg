@@ -7,7 +7,7 @@ class_name GameOverHandler
 @export var overlay_font_size := 64
 @export var overlay_fade_time := 2.5
 
-var _player_controller: Node = null
+var _player_controller: Node3D = null
 var _actor_stats: ActorStats = null
 var _overlay_layer: CanvasLayer = null
 var _overlay_background: ColorRect = null
@@ -74,8 +74,10 @@ func _resolve_player() -> void:
 		push_warning("GameOverHandler: player_path is not configured.")
 		return
 
-	_player_controller = _resolve_node_from_path(player_path)
-	if not _player_controller:
+	var resolved_player := _resolve_node_from_path(player_path)
+	if resolved_player and resolved_player is Node3D:
+		_player_controller = resolved_player as Node3D
+	else:
 		push_warning("GameOverHandler: could not find player controller at %s." % player_path)
 		return
 
@@ -84,6 +86,7 @@ func _resolve_player() -> void:
 		_actor_stats.connect("died", Callable(self, "_on_player_died"))
 	else:
 		push_warning("GameOverHandler: ActorStats not found on the player controller.")
+	GameState.apply_spawn(_player_controller)
 
 func _on_player_died(actor: Node) -> void:
 	if _game_over_active:
@@ -159,17 +162,18 @@ func _reload_scene() -> void:
 		push_error("GameOverHandler: SceneTree unavailable; cannot reload the scene.")
 		return
 
-	var reload_result := tree.reload_current_scene()
-	if reload_result == OK:
+	var target_scene_path := ""
+	if GameState.spawn_scene_path != "":
+		target_scene_path = GameState.spawn_scene_path
+	elif tree.current_scene and tree.current_scene.scene_file_path != "":
+		target_scene_path = tree.current_scene.scene_file_path
+	if target_scene_path == "":
+		push_error("GameOverHandler: No spawn scene path available to reload.")
 		return
 
-	var current_scene := tree.current_scene
-	if current_scene and current_scene.scene_file_path != "":
-		var change_result := tree.change_scene_to_file(current_scene.scene_file_path)
-		if change_result != OK:
-			push_error("GameOverHandler: Failed to reload scene (error %d)." % change_result)
-	else:
-		push_error("GameOverHandler: No current scene path available to reload.")
+	var change_result := tree.change_scene_to_file(target_scene_path)
+	if change_result != OK:
+		push_error("GameOverHandler: Failed to reload scene (error %d)." % change_result)
 
 func _find_actor_stats(node: Node) -> ActorStats:
 	if not node:
