@@ -13,6 +13,7 @@
 [ext_resource type="Resource" path="res://scenes/shared/attacks/EnemyBashAttack.tres" id="11_bash"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_red"]
+radius = 0.32080078
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_red"]
 
@@ -24,11 +25,14 @@ radius = 1.6
 
 [node name="EnemyCharacter" type="CharacterBody3D"]
 script = ExtResource("4_cye0q")
+attack_profile = ExtResource("11_bash")
 attack_area_path = NodePath("EnemyCharacter#AttackRangeArea")
 attack_ray_path = NodePath("EnemyCharacter#SwipeRay")
-attack_profile = ExtResource("11_bash")
 
 [node name="EnemyCharacter#NavigationAgent" type="NavigationAgent3D" parent="."]
+radius = 0.38
+height = 1.8
+path_max_distance = 32.0
 
 [node name="EnemyCharacter#CapsuleCollision" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape3D_red")

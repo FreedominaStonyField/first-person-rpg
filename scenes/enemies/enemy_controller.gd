@@ -15,6 +15,14 @@ class_name EnemyController
 @export var stopping_distance := 1.5
 @export var attack_range_margin := 0.5
 @export var flee_health_threshold := 0.25
+@export var navigation_target_epsilon := 0.15
+@export var wall_avoid_distance := 0.7
+@export var wall_push_strength := 0.5
+@export var steering_acceleration := 10.0
+@export var stuck_time_threshold := 0.8
+@export var stuck_progress_tolerance := 0.05
+@export var stuck_repath_jitter := 1.2
+@export var stuck_repath_cooldown := 0.5
 
 var navigation_agent: NavigationAgent3D = null
 var player: Node3D = null
@@ -26,8 +34,15 @@ var _attack_ray: RayCast3D
 var _cooldown_remaining := 0.0
 var _tracked_targets := {}
 var _self_stats: ActorStats = null
+var _last_nav_target := Vector3.ZERO
+var _has_nav_target := false
+var _last_distance_to_target := -1.0
+var _stuck_time_accum := 0.0
+var _stuck_repath_timer := 0.0
+var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
+	_rng.randomize()
 	player = _find_player()
 	navigation_agent = _resolve_navigation_agent()
 	behavior_state_machine = _resolve_behavior_state_machine()
@@ -56,9 +71,12 @@ func _process(_delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_apply_gravity(delta)
+	if _stuck_repath_timer > 0.0:
+		_stuck_repath_timer = max(0.0, _stuck_repath_timer - delta)
 	if behavior_state_machine:
 		behavior_state_machine.physics_step(delta)
 	move_and_slide()
+	_update_stuck_status(delta)
 
 	if _cooldown_remaining > 0.0:
 		_cooldown_remaining = max(0.0, _cooldown_remaining - delta)
@@ -171,6 +189,103 @@ func _should_flee() -> bool:
 	if ActorStats.MAX_STAT <= 0.0:
 		return false
 	return (_self_stats.health / ActorStats.MAX_STAT) <= flee_health_threshold
+
+func update_navigation_target(target: Vector3) -> void:
+	if not navigation_agent:
+		return
+	if _stuck_repath_timer > 0.0:
+		return
+	if _has_nav_target and target.distance_to(_last_nav_target) < navigation_target_epsilon:
+		return
+
+	navigation_agent.set_target_position(target)
+	_last_nav_target = target
+	_has_nav_target = true
+	_last_distance_to_target = navigation_agent.distance_to_target()
+
+func move_toward_point(next_point: Vector3, delta: float) -> void:
+	var direction := next_point - global_transform.origin
+	direction.y = 0.0
+	if direction == Vector3.ZERO:
+		velocity.x = move_toward(velocity.x, 0.0, move_speed * delta)
+		velocity.z = move_toward(velocity.z, 0.0, move_speed * delta)
+		return
+
+	var desired_velocity := direction.normalized() * move_speed
+	desired_velocity = _steer_away_from_walls(desired_velocity)
+	var accel: float = max(steering_acceleration, move_speed * 2.0)
+	velocity.x = move_toward(velocity.x, desired_velocity.x, accel * delta)
+	velocity.z = move_toward(velocity.z, desired_velocity.z, accel * delta)
+
+func _steer_away_from_walls(desired_velocity: Vector3) -> Vector3:
+	if desired_velocity == Vector3.ZERO:
+		return desired_velocity
+	var space: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if not space:
+		return desired_velocity
+	var origin := global_transform.origin
+	var cast_end := origin + desired_velocity.normalized() * wall_avoid_distance
+	var params: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(origin, cast_end, collision_mask, [self])
+	var hit: Dictionary = space.intersect_ray(params)
+	if hit.is_empty():
+		return desired_velocity
+	var push_normal: Vector3 = hit.get("normal", Vector3.ZERO)
+	push_normal.y = 0.0
+	if push_normal == Vector3.ZERO:
+		return desired_velocity
+	return desired_velocity + push_normal.normalized() * wall_push_strength
+
+func _update_stuck_status(delta: float) -> void:
+	if not navigation_agent:
+		return
+	if navigation_agent.is_navigation_finished():
+		_reset_stuck_tracking()
+		return
+
+	var distance_to_target := navigation_agent.distance_to_target()
+	if distance_to_target < 0.0:
+		return
+	if _last_distance_to_target < 0.0:
+		_last_distance_to_target = distance_to_target
+		return
+
+	var progress := _last_distance_to_target - distance_to_target
+	if progress > stuck_progress_tolerance:
+		_stuck_time_accum = 0.0
+	else:
+		_stuck_time_accum += delta
+
+	_last_distance_to_target = distance_to_target
+
+	if _stuck_time_accum >= stuck_time_threshold:
+		_apply_stuck_repath()
+
+func _reset_stuck_tracking() -> void:
+	_stuck_time_accum = 0.0
+	_last_distance_to_target = -1.0
+
+func _apply_stuck_repath() -> void:
+	_stuck_time_accum = 0.0
+	_stuck_repath_timer = stuck_repath_cooldown
+	if not navigation_agent:
+		return
+	var base_target := navigation_agent.get_target_position()
+	var jitter := _random_horizontal_jitter(stuck_repath_jitter)
+	var new_target := base_target + jitter
+	navigation_agent.set_target_position(new_target)
+	_last_nav_target = new_target
+	_has_nav_target = true
+	_last_distance_to_target = navigation_agent.distance_to_target()
+
+func _random_horizontal_jitter(magnitude: float) -> Vector3:
+	var offset := Vector3(
+		_rng.randf_range(-magnitude, magnitude),
+		0.0,
+		_rng.randf_range(-magnitude, magnitude)
+	)
+	if offset.length() > magnitude:
+		offset = offset.normalized() * magnitude
+	return offset
 
 func _select_target_stats() -> ActorStats:
 	var stats := _first_tracked_target_stats()
