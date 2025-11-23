@@ -275,7 +275,11 @@ func _should_flee() -> bool:
 		return false
 	if not flees_at_low_health:
 		return false
-	var max_health: float = max(max_health_reference, ActorStats.MAX_STAT)
+	var max_health: float = max_health_reference
+	if _self_stats and _self_stats.has_method("get_max_health"):
+		max_health = max(max_health, _self_stats.get_max_health())
+	else:
+		max_health = max(max_health, ActorStats.MAX_STAT)
 	if max_health <= 0.0:
 		return false
 	return (_self_stats.health / max_health) <= flee_health_fraction
